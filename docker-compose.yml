@@ -1,0 +1,27 @@
+services:
+  espace-api:
+    build: .
+
+    container_name: espace-api
+
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.routers.espace-api.rule=Host(`api.espace.levanzed.fyi`)"
+      - "traefik.http.routers.espace-api.entrypoints=websecure"
+      - "traefik.http.routers.espace-api.tls=true"
+      - "traefik.http.routers.espace-api.tls.certresolver=letsencrypt"
+
+      - "traefik.http.services.espace-api.loadbalancer.server.port=8000"
+
+    networks:
+      - levanz
+
+networks:
+  levanz:
+    external: true
