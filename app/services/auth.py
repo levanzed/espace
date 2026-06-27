@@ -14,4 +14,24 @@ def authenticate(username: str, password: str):
         },
     )
 
-    return response.json()
+    data = response.json()
+
+    if "token" not in data:
+        return data
+
+    user_response = requests.post(
+        f"{MOODLE_URL}/webservice/rest/server.php",
+        data={
+            "wstoken": data["token"],
+            "wsfunction": "core_webservice_get_site_info",
+            "moodlewsrestformat": "json",
+        },
+    )
+
+    site_info = user_response.json()
+
+    data["userid"] = site_info["userid"]
+    data["fullname"] = site_info["fullname"]
+    data["username"] = site_info["username"]
+
+    return data

@@ -12,7 +12,7 @@ def login(request: LoginRequest):
 
     data = authenticate(
         request.username,
-        request.password
+        request.password,
     )
 
     if "token" not in data:
@@ -23,7 +23,9 @@ def login(request: LoginRequest):
 
     access_token = create_access_token(
         {
-            "username": request.username,
+            "userid": data["userid"],
+            "username": data["username"],
+            "fullname": data["fullname"],
             "moodle_token": data["token"],
         }
     )
