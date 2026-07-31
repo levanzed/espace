@@ -1,18 +1,111 @@
+"""Official Moodle REST client for ESPACE.
+
+Only call documented Moodle Web Service functions through this module.
+Do not invent Moodle APIs here — unsupported capabilities belong in
+TODO(local_espace) extension points.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
 import requests
+from fastapi import HTTPException
 
-from app.config import MOODLE_URL, MOODLE_TOKEN
+from app.config import MOODLE_TOKEN, MOODLE_URL
 
 
-def call(function, token=None, **params):
+class MoodleError(Exception):
+    """Raised when Moodle returns an exception payload."""
 
-    response = requests.get(
-        f"{MOODLE_URL}/webservice/rest/server.php",
-        params={
-            "wstoken": token or MOODLE_TOKEN,
-            "wsfunction": function,
-            "moodlewsrestformat": "json",
-            **params,
+    def __init__(self, message: str, errorcode: str | None = None, raw: dict | None = None):
+        super().__init__(message)
+        self.message = message
+        self.errorcode = errorcode
+        self.raw = raw or {}
+
+
+def _flatten_params(params: dict[str, Any], prefix: str = "") -> dict[str, Any]:
+    """Flatten nested dict/list params into Moodle REST form keys."""
+    flat: dict[str, Any] = {}
+
+    for key, value in params.items():
+        full_key = f"{prefix}[{key}]" if prefix else str(key)
+
+        if isinstance(value, dict):
+            flat.update(_flatten_params(value, full_key))
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                item_key = f"{full_key}[{index}]"
+                if isinstance(item, dict):
+                    flat.update(_flatten_params(item, item_key))
+                else:
+                    flat[item_key] = item
+        elif value is not None:
+            flat[full_key] = value
+
+    return flat
+
+
+def call(
+    function: str,
+    token: str | None = None,
+    *,
+    method: str = "POST",
+    **params: Any,
+) -> Any:
+    """Call a Moodle wsfunction and return JSON.
+
+    Uses POST by default (required for write operations and large payloads).
+    Nested lists/dicts are flattened to Moodle's bracket notation.
+    """
+    if not MOODLE_URL:
+        raise HTTPException(status_code=500, detail="MOODLE_URL is not configured")
+
+    payload = {
+        "wstoken": token or MOODLE_TOKEN,
+        "wsfunction": function,
+        "moodlewsrestformat": "json",
+        **_flatten_params(params),
+    }
+
+    try:
+        if method.upper() == "GET":
+            response = requests.get(
+                f"{MOODLE_URL}/webservice/rest/server.php",
+                params=payload,
+                timeout=60,
+            )
+        else:
+            response = requests.post(
+                f"{MOODLE_URL}/webservice/rest/server.php",
+                data=payload,
+                timeout=60,
+            )
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=502, detail=f"Moodle request failed: {exc}") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail="Invalid JSON from Moodle") from exc
+
+    if isinstance(data, dict) and data.get("exception"):
+        raise MoodleError(
+            message=data.get("message") or data.get("exception") or "Moodle error",
+            errorcode=data.get("errorcode"),
+            raw=data,
+        )
+
+    return data
+
+
+def raise_http(exc: MoodleError, *, status_code: int = 400) -> None:
+    """Convert a MoodleError into an HTTPException."""
+    raise HTTPException(
+        status_code=status_code,
+        detail={
+            "message": exc.message,
+            "errorcode": exc.errorcode,
+            "moodle": exc.raw,
         },
     )
-
-    return response.json()

@@ -47,13 +47,18 @@ PostgreSQL
 
 ## Current Features
 
-- Moodle integration
-- REST API
-- User information endpoint
-- Course listing
-- Course contents
-- HTTPS support
-- Docker deployment
+- Moodle integration via official Web Services only
+- REST API adapter (FastAPI)
+- JWT authentication (Moodle token embedded)
+- Course listing, contents, create/update/delete/duplicate
+- Section structural management (add/hide/show/delete/move)
+- Module structural management (hide/show/delete/duplicate/move)
+- Activity engine with enriched mod details
+- Student interactions: assignment submit, forum, quiz attempts, choice
+- Grades, completion, calendar, participants, groups, messages
+- Extension points documented for `local_espace` gaps
+
+See `docs/MOODLE_WS_CAPABILITIES.md` for the full capability matrix.
 
 ---
 

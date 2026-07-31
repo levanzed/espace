@@ -38,6 +38,20 @@ When adding new functionality:
 2. **Implement the logic** in a new or existing service module – use type hints for all parameters and return values.
 3. **Create or update Pydantic models** if the request/response shape changes.
 4. **Write tests** that target the service layer; router tests can be thin smoke tests.
+5. **Verify the Moodle Web Service exists** in Moodle 5.2 before implementing. If it does not, return a structured unsupported payload and mark `TODO(local_espace)`.
+
+## local_espace Extension Points
+
+When official Moodle WS cannot support a capability, ESPACE exposes a clear unsupported response instead of inventing APIs:
+
+| Extension | Purpose |
+|-----------|---------|
+| `local_espace_upsert_module` | Full create/edit of module settings, files, HTML content |
+| `local_espace_update_section` | Rename section / edit section summary |
+| `local_espace_set_availability` | Restrict access conditions |
+| `local_espace_set_completion` | Configure activity completion settings |
+
+See `docs/MOODLE_WS_CAPABILITIES.md`.
 
 Following this plan ensures the backend remains a clean, maintainable bridge between Flutter and Moodle while respecting the constraints listed above.
 

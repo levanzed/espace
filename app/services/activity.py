@@ -1,4 +1,12 @@
-from app.services.moodle import call
+from app.services.moodle import MoodleError, call
+
+
+def _safe_call(function: str, token: str, **params):
+    """Call Moodle but return {} on failure for optional enrichment."""
+    try:
+        return call(function, token=token, **params)
+    except MoodleError:
+        return {}
 
 
 def _append_token(url: str | None, token: str) -> str | None:
@@ -9,10 +17,10 @@ def _append_token(url: str | None, token: str) -> str | None:
 
 
 def _find_module_in_contents(course_id: int, cmid: int, token: str) -> dict:
-    sections = call(
+    sections = _safe_call(
         "core_course_get_contents",
+        token,
         courseid=course_id,
-        token=token,
     )
 
     if not isinstance(sections, list):
@@ -53,24 +61,24 @@ def _find_by_coursemodule(items: list, cmid: int) -> dict:
 
 
 def _fetch_assign_details(instance: int, course_id: int, cmid: int, token: str) -> dict:
-    data = call(
+    data = _safe_call(
         "mod_assign_get_assignments",
+        token,
         courseids=[course_id],
-        token=token,
     )
 
     assignment = {}
-    for course in data.get("courses", []):
+    for course in data.get("courses", []) if isinstance(data, dict) else []:
         assignment = _find_by_instance(course.get("assignments", []), instance)
         if assignment:
             break
 
     status = {}
     if assignment:
-        status = call(
+        status = _safe_call(
             "mod_assign_get_submission_status",
+            token,
             assignid=assignment.get("id", instance),
-            token=token,
         )
 
     return {
@@ -80,23 +88,23 @@ def _fetch_assign_details(instance: int, course_id: int, cmid: int, token: str) 
 
 
 def _fetch_quiz_details(instance: int, course_id: int, cmid: int, token: str) -> dict:
-    quizzes = call(
+    quizzes = _safe_call(
         "mod_quiz_get_quizzes_by_courses",
+        token,
         courseids=[course_id],
-        token=token,
     )
 
-    quiz = _find_by_coursemodule(quizzes.get("quizzes", []), cmid)
+    quiz = _find_by_coursemodule(quizzes.get("quizzes", []) if isinstance(quizzes, dict) else [], cmid)
     if not quiz:
-        quiz = _find_by_instance(quizzes.get("quizzes", []), instance)
+        quiz = _find_by_instance(quizzes.get("quizzes", []) if isinstance(quizzes, dict) else [], instance)
 
     attempts = {}
     if quiz:
-        attempts = call(
+        attempts = _safe_call(
             "mod_quiz_get_user_attempts",
+            token,
             quizid=quiz.get("id", instance),
             status="all",
-            token=token,
         )
 
     return {
@@ -106,20 +114,20 @@ def _fetch_quiz_details(instance: int, course_id: int, cmid: int, token: str) ->
 
 
 def _fetch_forum_details(instance: int, course_id: int, token: str) -> dict:
-    forums = call(
+    forums = _safe_call(
         "mod_forum_get_forums_by_courses",
+        token,
         courseids=[course_id],
-        token=token,
     )
 
-    forum = _find_by_instance(forums, instance)
+    forum = _find_by_instance(forums if isinstance(forums, list) else [], instance)
 
     discussions = {}
     if forum:
-        discussions = call(
+        discussions = _safe_call(
             "mod_forum_get_forum_discussions",
+            token,
             forumid=forum.get("id", instance),
-            token=token,
         )
 
     return {
@@ -129,13 +137,16 @@ def _fetch_forum_details(instance: int, course_id: int, token: str) -> dict:
 
 
 def _fetch_book_details(instance: int, course_id: int, token: str) -> dict:
-    books = call(
+    books = _safe_call(
         "mod_book_get_books_by_courses",
+        token,
         courseids=[course_id],
-        token=token,
     )
 
-    book = _find_by_instance(books.get("books", []), instance)
+    book = _find_by_instance(
+        books.get("books", []) if isinstance(books, dict) else [],
+        instance,
+    )
 
     chapters = []
     for chapter in book.get("chapters", []) if book else []:
@@ -144,15 +155,15 @@ def _fetch_book_details(instance: int, course_id: int, token: str) -> dict:
             chapters.append(chapter)
             continue
 
-        contents = call(
+        contents = _safe_call(
             "mod_book_get_book_contents_by_chapterid",
+            token,
             chapterid=chapter_id,
-            token=token,
         )
         chapters.append(
             {
                 **chapter,
-                "contents": contents.get("contents", contents),
+                "contents": contents.get("contents", contents) if isinstance(contents, dict) else contents,
             }
         )
 
@@ -170,13 +181,11 @@ def _fetch_mod_by_courses(
     cmid: int,
     token: str,
 ) -> dict:
-    data = call(
-        function,
-        courseids=[course_id],
-        token=token,
-    )
+    data = _safe_call(function, token, courseids=[course_id])
 
-    items = data.get(key, data if isinstance(data, list) else [])
+    items = data.get(key, data if isinstance(data, list) else []) if isinstance(data, dict) else (
+        data if isinstance(data, list) else []
+    )
     item = _find_by_coursemodule(items, cmid)
     if not item:
         item = _find_by_instance(items, instance)
@@ -428,10 +437,7 @@ def get_activity(cmid: int, token: str) -> dict:
         token=token,
     )
 
-    if isinstance(cm_data, dict) and cm_data.get("exception"):
-        return cm_data
-
-    cm = cm_data.get("cm", cm_data)
+    cm = cm_data.get("cm", cm_data) if isinstance(cm_data, dict) else {}
     modname = cm.get("modname", "")
     instance = cm.get("instance", 0)
     course_id = cm.get("course", 0)
