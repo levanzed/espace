@@ -1,13 +1,17 @@
-"""Course structure editor via official Moodle courseformat WS.
+"""Course structure editor.
 
-Uses:
-  - core_courseformat_update_course  (section/module structural actions)
-  - core_courseformat_new_module     (quick-create where FEATURE_QUICKCREATE)
+Sections (Sprint 1A — Add / Hide / Show):
+  - local_espace_create_section
+  - local_espace_hide_section
+  - local_espace_show_section
 
-Unsupported (TODO local_espace):
-  - section rename / section summary edit
-  - full module settings & content editing
-  - availability & completion configuration UIs
+Sections (Sprint 1B — still via courseformat until wired):
+  - section_delete / section_move / section_move_after
+  - rename stub (unsupported_section_rename)
+
+Modules:
+  - core_courseformat_update_course
+  - core_courseformat_new_module (FEATURE_QUICKCREATE only)
 """
 
 from __future__ import annotations
@@ -19,7 +23,6 @@ from fastapi import HTTPException
 
 from app.services.moodle import MoodleError, call, raise_http
 
-# Official actions exposed by core_courseformat\stateactions
 SECTION_ACTIONS = {
     "section_add",
     "section_delete",
@@ -72,6 +75,22 @@ def update_course_structure(
     return raw
 
 
+def _call_local_espace(function: str, token: str, **params: Any) -> Any:
+    try:
+        return call(function, token=token, **params)
+    except MoodleError as exc:
+        raise_http(exc)
+
+
+def _require_section_ids(section_ids: list[int], action: str) -> list[int]:
+    if not section_ids:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Action '{action}' requires at least one section_id in section_ids",
+        )
+    return section_ids
+
+
 def section_action(
     *,
     course_id: int,
@@ -85,6 +104,40 @@ def section_action(
             status_code=400,
             detail=f"Unsupported section action '{action}'. Allowed: {sorted(SECTION_ACTIONS)}",
         )
+
+    if action == "section_add":
+        return _call_local_espace(
+            "local_espace_create_section",
+            token,
+            courseid=course_id,
+            position=0,
+        )
+
+    if action == "section_hide":
+        results = [
+            _call_local_espace(
+                "local_espace_hide_section",
+                token,
+                courseid=course_id,
+                sectionid=section_id,
+            )
+            for section_id in _require_section_ids(section_ids, action)
+        ]
+        return results[0] if len(results) == 1 else results
+
+    if action == "section_show":
+        results = [
+            _call_local_espace(
+                "local_espace_show_section",
+                token,
+                courseid=course_id,
+                sectionid=section_id,
+            )
+            for section_id in _require_section_ids(section_ids, action)
+        ]
+        return results[0] if len(results) == 1 else results
+
+    # Sprint 1B: delete / move still use courseformat until local_espace wiring.
     return update_course_structure(
         course_id=course_id,
         action=action,
@@ -168,16 +221,15 @@ def new_module(
 
 
 def unsupported_section_rename(section_id: int) -> dict[str, Any]:
-    # TODO(local_espace): local_espace_update_section
+    # Sprint 1B: wire POST .../rename → local_espace_rename_section.
     return {
         "status": "unsupported",
         "reason": (
-            "Official Moodle WS has no dedicated stable function to rename a course "
-            f"section (section_id={section_id}). core_update_inplace_editable is an "
-            "AJAX UI helper, not a course-structure API."
+            f"Section rename (section_id={section_id}) is deferred to Sprint 1B. "
+            "Plugin WS local_espace_rename_section is already registered."
         ),
-        "extension": "local_espace_update_section",
-        "todo": "TODO(local_espace): rename section + edit section summary",
+        "extension": "local_espace_rename_section",
+        "todo": "Sprint 1B: rename section + edit section summary via local_espace",
     }
 
 

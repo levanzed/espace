@@ -125,8 +125,7 @@ def section_action(
 
 @router.post("/courses/{course_id}/sections/{section_id}/rename")
 def section_rename(course_id: int, section_id: int):
-    """Section rename is not available via official Moodle WS."""
-    # TODO(local_espace): local_espace_update_section
+    """Section rename deferred to Sprint 1B (local_espace_rename_section)."""
     return course_editor.unsupported_section_rename(section_id)
 
 

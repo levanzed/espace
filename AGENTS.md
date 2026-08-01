@@ -29,6 +29,7 @@ The **ESPACE** FastAPI backend acts as an intermediary between a Flutter client 
 | **Security Agent**| `app/security.py`     | Generates and validates JWT access tokens, ensuring that only authenticated Flutter clients can reach the Service Agents. |
 | **Config Agent** | `app/config.py`        | Provides environment‑specific settings (Moodle URL, secret keys, etc.) to all other agents. |
 | **Model Agent**  | `app/models/`          | Defines request and response schemas using Pydantic, guaranteeing type safety across the stack. |
+| **Moodle Plugin** | `local_espace/`        | Moodle 5.2 local plugin for official-WS gaps. Install as `{moodle}/local/espace/`. |
 
 ## How to Extend
 
