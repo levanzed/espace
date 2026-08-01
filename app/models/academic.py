@@ -30,10 +30,19 @@ class DuplicateCourseRequest(BaseModel):
 
 class SectionActionRequest(BaseModel):
     action: str = Field(
-        description="section_add | section_delete | section_hide | section_show | section_move_after"
+        description=(
+            "section_add | section_delete | section_hide | section_show | "
+            "section_move | section_move_after"
+        )
     )
     section_ids: list[int] = Field(default_factory=list)
     target_section_id: int | None = None
+
+
+class RenameSectionRequest(BaseModel):
+    name: str | None = None
+    summary: str | None = None
+    summaryformat: int = 1
 
 
 class ModuleActionRequest(BaseModel):

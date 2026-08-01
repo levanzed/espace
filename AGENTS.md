@@ -47,8 +47,8 @@ When official Moodle WS cannot support a capability, ESPACE exposes a clear unsu
 
 | Extension | Purpose |
 |-----------|---------|
+| `local_espace_rename_section` | Rename section / edit section summary |
 | `local_espace_upsert_module` | Full create/edit of module settings, files, HTML content |
-| `local_espace_update_section` | Rename section / edit section summary |
 | `local_espace_set_availability` | Restrict access conditions |
 | `local_espace_set_completion` | Configure activity completion settings |
 

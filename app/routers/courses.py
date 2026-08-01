@@ -8,6 +8,7 @@ from app.models.academic import (
     DuplicateCourseRequest,
     ModuleActionRequest,
     NewModuleRequest,
+    RenameSectionRequest,
     SectionActionRequest,
     UpdateCourseRequest,
 )
@@ -124,9 +125,20 @@ def section_action(
 
 
 @router.post("/courses/{course_id}/sections/{section_id}/rename")
-def section_rename(course_id: int, section_id: int):
-    """Section rename deferred to Sprint 1B (local_espace_rename_section)."""
-    return course_editor.unsupported_section_rename(section_id)
+def section_rename(
+    course_id: int,
+    section_id: int,
+    body: RenameSectionRequest,
+    token: str = Depends(moodle_token),
+):
+    return course_editor.rename_section(
+        course_id=course_id,
+        section_id=section_id,
+        name=body.name,
+        summary=body.summary,
+        summaryformat=body.summaryformat,
+        token=token,
+    )
 
 
 @router.post("/courses/{course_id}/modules/actions")

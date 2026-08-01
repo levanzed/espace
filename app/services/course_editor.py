@@ -1,15 +1,14 @@
 """Course structure editor.
 
-Sections (Sprint 1A — Add / Hide / Show):
+Sections (all via local_espace):
   - local_espace_create_section
+  - local_espace_rename_section
   - local_espace_hide_section
   - local_espace_show_section
+  - local_espace_move_section
+  - local_espace_delete_section
 
-Sections (Sprint 1B — still via courseformat until wired):
-  - section_delete / section_move / section_move_after
-  - rename stub (unsupported_section_rename)
-
-Modules:
+Modules (still official courseformat WS):
   - core_courseformat_update_course
   - core_courseformat_new_module (FEATURE_QUICKCREATE only)
 """
@@ -51,6 +50,7 @@ def update_course_structure(
     target_cmid: int | None = None,
     token: str,
 ) -> Any:
+    """Module structural actions via official courseformat WS."""
     params: dict[str, Any] = {
         "action": action,
         "courseid": course_id,
@@ -66,7 +66,6 @@ def update_course_structure(
     except MoodleError as exc:
         raise_http(exc)
 
-    # Moodle returns a JSON-encoded string of state updates.
     if isinstance(raw, str):
         try:
             return json.loads(raw)
@@ -89,6 +88,29 @@ def _require_section_ids(section_ids: list[int], action: str) -> list[int]:
             detail=f"Action '{action}' requires at least one section_id in section_ids",
         )
     return section_ids
+
+
+def _destination_section_number(
+    *,
+    course_id: int,
+    target_section_id: int,
+    token: str,
+) -> int:
+    """Resolve a section id to Moodle section number for local_espace_move_section."""
+    payload = _call_local_espace(
+        "local_espace_get_section",
+        token,
+        courseid=course_id,
+        sectionid=target_section_id,
+    )
+    data = payload.get("data") if isinstance(payload, dict) else None
+    section = data.get("section") if isinstance(data, dict) else None
+    if not isinstance(section, dict) or section.get("section") is None:
+        raise HTTPException(
+            status_code=502,
+            detail="Unexpected response from local_espace_get_section",
+        )
+    return int(section["section"])
 
 
 def section_action(
@@ -137,14 +159,68 @@ def section_action(
         ]
         return results[0] if len(results) == 1 else results
 
-    # Sprint 1B: delete / move still use courseformat until local_espace wiring.
-    return update_course_structure(
-        course_id=course_id,
-        action=action,
-        ids=section_ids,
-        target_section_id=target_section_id,
-        token=token,
+    if action == "section_delete":
+        results = [
+            _call_local_espace(
+                "local_espace_delete_section",
+                token,
+                courseid=course_id,
+                sectionid=section_id,
+            )
+            for section_id in _require_section_ids(section_ids, action)
+        ]
+        return results[0] if len(results) == 1 else results
+
+    if action in {"section_move", "section_move_after"}:
+        section_id = _require_section_ids(section_ids, action)[0]
+        if target_section_id is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Action '{action}' requires target_section_id",
+            )
+        destination = _destination_section_number(
+            course_id=course_id,
+            target_section_id=target_section_id,
+            token=token,
+        )
+        return _call_local_espace(
+            "local_espace_move_section",
+            token,
+            courseid=course_id,
+            sectionid=section_id,
+            destination=destination,
+        )
+
+    raise HTTPException(
+        status_code=400,
+        detail=f"Unsupported section action '{action}'",
     )
+
+
+def rename_section(
+    *,
+    course_id: int,
+    section_id: int,
+    name: str | None,
+    summary: str | None,
+    summaryformat: int,
+    token: str,
+) -> Any:
+    if name is None and summary is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide at least one of name or summary",
+        )
+    params: dict[str, Any] = {
+        "courseid": course_id,
+        "sectionid": section_id,
+        "summaryformat": summaryformat,
+    }
+    if name is not None:
+        params["name"] = name
+    if summary is not None:
+        params["summary"] = summary
+    return _call_local_espace("local_espace_rename_section", token, **params)
 
 
 def module_action(
@@ -195,7 +271,6 @@ def new_module(
     try:
         raw = call("core_courseformat_new_module", token=token, **params)
     except MoodleError as exc:
-        # Surface a clear extension hint when quick-create is unavailable.
         if exc.errorcode or "quick creation" in (exc.message or "").lower():
             raise HTTPException(
                 status_code=501,
@@ -218,19 +293,6 @@ def new_module(
         except json.JSONDecodeError:
             return {"raw": raw}
     return raw
-
-
-def unsupported_section_rename(section_id: int) -> dict[str, Any]:
-    # Sprint 1B: wire POST .../rename → local_espace_rename_section.
-    return {
-        "status": "unsupported",
-        "reason": (
-            f"Section rename (section_id={section_id}) is deferred to Sprint 1B. "
-            "Plugin WS local_espace_rename_section is already registered."
-        ),
-        "extension": "local_espace_rename_section",
-        "todo": "Sprint 1B: rename section + edit section summary via local_espace",
-    }
 
 
 def unsupported_module_settings(cmid: int, modname: str) -> dict[str, Any]:

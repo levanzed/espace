@@ -21,14 +21,15 @@ Legend:
 # ✅ core_course_duplicate_course
 # 🟡 core_backup_* async helpers only (no full archive UX) → TODO(local_espace) for guided backup/restore UI
 
-# Section ops (plugin: local/espace) — FastAPI Sprint 1A
+# Section ops (plugin: local/espace) — complete via FastAPI
 # ✅ local_espace_create_section  ← POST /courses/{id}/sections action=section_add
 # ✅ local_espace_hide_section    ← action=section_hide
 # ✅ local_espace_show_section    ← action=section_show
-# 🟡 local_espace_rename_section ← Sprint 1B (endpoint stub today)
-# 🟡 local_espace_delete_section ← Sprint 1B (still courseformat in FastAPI)
-# 🟡 local_espace_move_section   ← Sprint 1B (still courseformat in FastAPI)
-# ✅ local_espace_get_section / list_sections (plugin ready; course browse uses core_course_get_contents)
+# ✅ local_espace_rename_section  ← POST /courses/{id}/sections/{section_id}/rename
+# ✅ local_espace_delete_section  ← action=section_delete
+# ✅ local_espace_move_section    ← action=section_move | section_move_after
+# ✅ local_espace_get_section     ← used internally for move destination resolution
+# Course browse still uses core_course_get_contents (sections + modules)
 
 # Module structural ops
 # ✅ cm_hide / cm_show / cm_delete / cm_duplicate / cm_move via core_courseformat_update_course
