@@ -80,6 +80,17 @@ def _fetch_assign_details(instance: int, course_id: int, cmid: int, token: str) 
             token,
             assignid=assignment.get("id", instance),
         )
+        # Same tokenisation as course-module contents so pluginfile URLs open in the app.
+        if isinstance(assignment.get("introattachments"), list):
+            assignment["introattachments"] = _normalize_contents(
+                assignment["introattachments"],
+                token,
+            )
+        if isinstance(assignment.get("introfiles"), list):
+            assignment["introfiles"] = _normalize_contents(
+                assignment["introfiles"],
+                token,
+            )
 
     return {
         "assignment": assignment,
