@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+import logging
+import traceback
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.deps import current_userid, moodle_token
 from app.models.academic import (
@@ -18,6 +21,9 @@ from app.services import activities, course_editor, courses
 from app.services.moodle import MoodleError, raise_http
 
 router = APIRouter()
+
+# TEMP DEBUG: Sprint A integration — remove after root cause identified
+logger = logging.getLogger("espace.activities.debug")
 
 
 @router.get("/courses")
@@ -170,13 +176,37 @@ def create_activity(
     token: str = Depends(moodle_token),
 ):
     """Create an activity in a section (Sprint A: modname=assign)."""
-    return activities.create_activity(
-        course_id=course_id,
-        section_id=section_id,
-        modname=body.modname,
-        settings=body.settings,
-        token=token,
+    # TEMP DEBUG: Sprint A integration — remove after root cause identified
+    logger.error(
+        "POST activities enter course_id=%s section_id=%s modname=%s settings=%s",
+        course_id,
+        section_id,
+        body.modname,
+        body.settings,
     )
+    try:
+        result = activities.create_activity(
+            course_id=course_id,
+            section_id=section_id,
+            modname=body.modname,
+            settings=body.settings,
+            token=token,
+        )
+    except HTTPException as exc:
+        logger.error(
+            "POST activities HTTPException status=%s detail=%s",
+            exc.status_code,
+            exc.detail,
+        )
+        raise
+    except Exception:
+        logger.error(
+            "POST activities unexpected exception traceback:\n%s",
+            traceback.format_exc(),
+        )
+        raise
+    logger.error("POST activities success result=%s", result)
+    return result
 
 
 @router.put("/courses/{course_id}/activities/{cmid}")
