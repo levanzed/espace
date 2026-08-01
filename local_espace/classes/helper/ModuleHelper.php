@@ -134,4 +134,26 @@ final class ModuleHelper {
         [$course, $cm] = get_course_and_cm_from_cmid($cmid);
         return get_fast_modinfo($course)->get_cm($cmid);
     }
+
+    /**
+     * Convert cm_info into a serialisable array for ESPACE responses.
+     *
+     * @param cm_info $cm
+     * @return array
+     */
+    public function export_cm(cm_info $cm): array {
+        $sectioninfo = $cm->get_section_info();
+        return [
+            'id' => (int) $cm->id,
+            'course' => (int) $cm->course,
+            'module' => (int) $cm->module,
+            'instance' => (int) $cm->instance,
+            'section' => (int) $cm->sectionnum,
+            'sectionid' => (int) $sectioninfo->id,
+            'modname' => (string) $cm->modname,
+            'name' => (string) $cm->name,
+            'visible' => (int) $cm->visible,
+            'idnumber' => (string) ($cm->idnumber ?? ''),
+        ];
+    }
 }

@@ -90,4 +90,28 @@ final class ModuleValidator {
         }
         return $cmid;
     }
+
+    /**
+     * Modnames that local_espace_upsert_module can create/update today.
+     *
+     * Sprint A: assign only. Later sprints add quiz/page/forum branches.
+     */
+    public const UPSERT_SUPPORTED_MODNAMES = [
+        'assign',
+    ];
+
+    /**
+     * Validate modname is installed and currently upsert-supported.
+     *
+     * @param string $modname
+     * @return string
+     * @throws moodle_exception
+     */
+    public function require_upsert_modname(string $modname): string {
+        $clean = $this->require_modname($modname);
+        if (!in_array($clean, self::UPSERT_SUPPORTED_MODNAMES, true)) {
+            throw new moodle_exception('errormoduleupsertunsupported', 'local_espace', '', $clean);
+        }
+        return $clean;
+    }
 }

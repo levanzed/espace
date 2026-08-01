@@ -21,28 +21,37 @@ Legend:
 # ✅ core_course_duplicate_course
 # 🟡 core_backup_* async helpers only (no full archive UX) → TODO(local_espace) for guided backup/restore UI
 
-# Section ops (plugin: local/espace) — complete via FastAPI
+# Section ops (plugin: local/espace) — COMPLETE
 # ✅ local_espace_create_section  ← POST /courses/{id}/sections action=section_add
+#    (optional name, summary, summaryformat → Moodle course_sections)
 # ✅ local_espace_hide_section    ← action=section_hide
 # ✅ local_espace_show_section    ← action=section_show
 # ✅ local_espace_rename_section  ← POST /courses/{id}/sections/{section_id}/rename
+#    (name and/or summary + summaryformat)
 # ✅ local_espace_delete_section  ← action=section_delete
 # ✅ local_espace_move_section    ← action=section_move | section_move_after
 # ✅ local_espace_get_section     ← used internally for move destination resolution
-# Course browse still uses core_course_get_contents (sections + modules)
+# Course browse still uses core_course_get_contents (sections + modules + summary)
 
 # Module structural ops
 # ✅ cm_hide / cm_show / cm_delete / cm_duplicate / cm_move via core_courseformat_update_course
 # 🟡 core_courseformat_new_module — only for mods with FEATURE_QUICKCREATE
-# ❌ Full create/edit of resource/page/url/folder/label/book content & settings
-#    TODO(local_espace): local_espace_upsert_module
+# ✅ local_espace_upsert_module — Assignment Sprint A (modname=assign)
+#    ← POST /courses/{id}/sections/{section_id}/activities
+#    ← PUT  /courses/{id}/activities/{cmid}
+#    ← GET  /courses/{id}/activities/{cmid} (read via mod_assign_get_assignments)
+# ❌ Full create/edit of quiz/page/url/folder/label/book content & settings
+#    TODO(local_espace): local_espace_upsert_module branches for other modnames
 # ❌ Availability / restriction editor
 #    TODO(local_espace): local_espace_set_availability
 # ❌ Completion settings configuration
 #    TODO(local_espace): local_espace_set_completion
 
-# Participants / groups / enrolment / files / grades / calendar
-# ✅ See services in app/services/{participants,groups,files,grades,calendar}.py
+# ✅ core_files_get_unused_draft_itemid ← GET /files/draft-itemid
+# ✅ core_files_upload ← POST /files/upload (Activity authoring attachments)
+
+# Participants / groups / enrolment / grades / calendar
+# ✅ See services in app/services/{participants,academic,grades}.py
 
 # ---------------------------------------------------------------------------
 # Phase C – Student

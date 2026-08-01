@@ -46,5 +46,16 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026040100, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080100) {
+        // Registers local_espace_upsert_module (Assignment Sprint A).
+        // No schema changes — services.php is refreshed on upgrade.
+        upgrade_plugin_savepoint(true, 2026080100, 'local', 'espace');
+    }
+
+    if ($oldversion < 2026080101) {
+        // Moodle 5.2.1 alignment: preserve CM AI fields on module upsert update path.
+        upgrade_plugin_savepoint(true, 2026080101, 'local', 'espace');
+    }
+
     return true;
 }

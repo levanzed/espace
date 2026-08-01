@@ -57,7 +57,7 @@ External classes contain **no** business logic.
 | `local_espace_get_section` | Get one section |
 | `local_espace_list_sections` | List sections |
 
-Every mutation:
+Every section mutation:
 
 1. Checks plugin enabled  
 2. Requires login  
@@ -69,14 +69,28 @@ Every mutation:
 8. Triggers a Moodle event  
 9. Returns a structured envelope  
 
-### Framework ready (no WS registered yet)
+### Implemented: Module upsert (Assignment Sprint A)
+
+| Web service | Description |
+|-------------|-------------|
+| `local_espace_upsert_module` | Create/update activity settings (**official WS gap**). Sprint A: `modname=assign` only. |
+
+Behaviour:
+
+- Dispatches by `modname` → `AssignmentService::upsert` for `assign`
+- Other modnames → unsupported exception (coming soon)
+- Writes via Moodle `add_moduleinfo` / `update_moduleinfo` (Compatibility Promise)
+- Requires `local/espace:use` + `local/espace:managemodules` + `moodle/course:manageactivities`
+- Hide/show/delete CM remain on official `core_courseformat_update_course`
+
+### Framework ready (typed shells; upsert not yet wired)
 
 Service + external shells for:
 
-- Course, Module, Page, Assignment, Quiz, Resource  
+- Course, Page, Quiz, Resource  
 - Availability, Completion  
 
-These classes provide capability matrices and constructor wiring so future sprints add methods without redesign.
+These classes provide capability matrices and constructor wiring so future sprints add dispatcher branches without redesign.
 
 ## Installation
 
@@ -87,8 +101,10 @@ These classes provide capability matrices and constructor wiring so future sprin
 4. Add authorised users / tokens used by the FastAPI backend
 5. Ensure the token user has:
    - `local/espace:use`
-   - `local/espace:managesections`
+   - `local/espace:managesections` (sections)
+   - `local/espace:managemodules` (module upsert)
    - `moodle/course:update`
+   - `moodle/course:manageactivities` (module upsert)
    - `moodle/course:movesections` (for move)
    - `moodle/course:sectionvisibility` (for hide/show)
 
@@ -117,7 +133,8 @@ These classes provide capability matrices and constructor wiring so future sprin
 | Hide/show/delete/duplicate/move cm | Official `core_courseformat_update_course` |
 | Rename section / edit summary | **`local_espace_rename_section`** |
 | Create section with name in one call | **`local_espace_create_section`** |
-| Module settings/content upsert | Future typed services (Page/Resource/Assign/Quiz) |
+| Assignment create/update settings + plugins + attachments | **`local_espace_upsert_module`** (`modname=assign`) |
+| Other activity upserts (quiz, page, …) | Future dispatcher branches on same WS |
 | Availability conditions write | Future `AvailabilityService` |
 | Completion settings write | Future `CompletionService` |
 

@@ -37,6 +37,10 @@ class SectionActionRequest(BaseModel):
     )
     section_ids: list[int] = Field(default_factory=list)
     target_section_id: int | None = None
+    # Optional fields for section_add (Moodle course_sections.name / summary).
+    name: str | None = None
+    summary: str | None = None
+    summaryformat: int = 1
 
 
 class RenameSectionRequest(BaseModel):
@@ -58,6 +62,41 @@ class NewModuleRequest(BaseModel):
     modname: str
     section_id: int
     target_cmid: int | None = None
+
+
+class AssignAuthoringSettings(BaseModel):
+    """Sprint A assignment authoring fields (Moodle-owned)."""
+
+    name: str
+    intro: str = ""
+    introformat: int = 1
+    introattachments: int | None = None
+    allowsubmissionsfromdate: int | None = None
+    duedate: int | None = None
+    cutoffdate: int | None = None
+    gradingduedate: int | None = None
+    onlinetext_enabled: int | None = None
+    file_enabled: int | None = None
+    maxfiles: int | None = None
+    maxsizebytes: int | None = None
+    grade_type: str | None = None  # none | point | scale
+    grade: float | None = None
+    scaleid: int | None = None
+    gradecat: int | None = None
+    visible: int | None = None
+
+
+class CreateActivityRequest(BaseModel):
+    """POST /courses/{id}/sections/{section_id}/activities"""
+
+    modname: str
+    settings: dict[str, Any] = Field(default_factory=dict)
+
+
+class UpdateActivityRequest(BaseModel):
+    """PUT /courses/{id}/activities/{cmid}"""
+
+    settings: dict[str, Any] = Field(default_factory=dict)
 
 
 class EnrolUserRequest(BaseModel):
@@ -115,6 +154,18 @@ class CalendarEventRequest(BaseModel):
     courseid: int = 0
     timestart: int
     timeduration: int = 0
+
+
+class FileUploadRequest(BaseModel):
+    """Upload a file into a Moodle draft (or other) file area via core_files_upload."""
+
+    filecontent_base64: str
+    filename: str
+    contextid: int
+    component: str = "user"
+    filearea: str = "draft"
+    itemid: int
+    filepath: str = "/"
 
 
 class UnsupportedExtensionPoint(BaseModel):

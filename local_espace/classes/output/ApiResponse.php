@@ -94,4 +94,24 @@ final class ApiResponse {
             'timemodified' => new external_value(PARAM_INT, 'Last modified', VALUE_OPTIONAL),
         ]);
     }
+
+    /**
+     * Course module record structure returned by module upsert operations.
+     *
+     * @return external_single_structure
+     */
+    public static function cm_structure(): external_single_structure {
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Course module id'),
+            'course' => new external_value(PARAM_INT, 'Course id'),
+            'module' => new external_value(PARAM_INT, 'Modules table id'),
+            'instance' => new external_value(PARAM_INT, 'Activity instance id'),
+            'section' => new external_value(PARAM_INT, 'Section number'),
+            'sectionid' => new external_value(PARAM_INT, 'Section id'),
+            'modname' => new external_value(PARAM_PLUGIN, 'Module plugin name'),
+            'name' => new external_value(PARAM_RAW, 'Activity name'),
+            'visible' => new external_value(PARAM_INT, 'Visibility (1/0)'),
+            'idnumber' => new external_value(PARAM_RAW, 'CM idnumber', VALUE_OPTIONAL),
+        ]);
+    }
 }

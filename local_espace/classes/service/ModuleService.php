@@ -81,11 +81,53 @@ final class ModuleService extends BaseService {
                 'core_course_get_contents',
             ],
             'local_espace_planned' => [
-                'upsert_module_settings_and_content',
+                'local_espace_upsert_module',
             ],
+            'local_espace_gap' => 'local_espace_upsert_module (Sprint A: assign)',
             'allowed_modnames' => ModuleValidator::ALLOWED_MODNAMES,
-            'notes' => 'Structural module ops: use official courseformat WS. Content/settings upsert reserved for typed services.',
+            'upsert_supported_modnames' => ModuleValidator::UPSERT_SUPPORTED_MODNAMES,
+            'notes' => 'Structural module ops: use official courseformat WS. Content/settings upsert via local_espace_upsert_module.',
         ]);
+    }
+
+    /**
+     * Create or update a course module's settings (dispatcher by modname).
+     *
+     * Sprint A: only modname=assign is implemented.
+     *
+     * @param int $courseid
+     * @param string $modname
+     * @param int $sectionid Section id (required for create)
+     * @param int $cmid 0 to create; existing cmid to update
+     * @param array $settings Type-specific settings
+     * @return array
+     */
+    public function upsert(
+        int $courseid,
+        string $modname,
+        int $sectionid,
+        int $cmid,
+        array $settings
+    ): array {
+        $this->permissions->require_module_management($courseid);
+        $modname = $this->modulevalidator->require_upsert_modname($modname);
+
+        switch ($modname) {
+            case 'assign':
+                $service = new AssignmentService(
+                    $this->permissions,
+                    $this->modules,
+                    $this->coursevalidator,
+                    null,
+                    $this->modulevalidator,
+                    null,
+                    $this->files
+                );
+                return $service->upsert($courseid, $sectionid, $cmid, $settings);
+            default:
+                // Defensive: require_upsert_modname should already reject.
+                throw new \moodle_exception('errormoduleupsertunsupported', 'local_espace', '', $modname);
+        }
     }
 
     /**

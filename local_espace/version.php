@@ -28,8 +28,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_espace';
-$plugin->version   = 2026040100;
-$plugin->requires  = 2025041400; // Moodle 5.0.0+ (covers 5.2.x).
-$plugin->release   = '1.0.0';
+$plugin->version   = 2026080101;
+$plugin->requires  = 2025041400; // Moodle 5.0.0+ (verified against 5.2.1).
+$plugin->release   = '1.1.1';
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->supported = [500, 502];

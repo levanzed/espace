@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
-from app.deps import current_userid, get_token_payload, moodle_token
+from app.deps import current_userid, moodle_token
 from app.models.academic import (
+    CreateActivityRequest,
     CreateCourseRequest,
     DuplicateCourseRequest,
     ModuleActionRequest,
     NewModuleRequest,
     RenameSectionRequest,
     SectionActionRequest,
+    UpdateActivityRequest,
     UpdateCourseRequest,
 )
-from app.services import course_editor, courses
+from app.services import activities, course_editor, courses
 from app.services.moodle import MoodleError, raise_http
 
 router = APIRouter()
@@ -120,6 +122,9 @@ def section_action(
         action=body.action,
         section_ids=body.section_ids,
         target_section_id=body.target_section_id,
+        name=body.name,
+        summary=body.summary,
+        summaryformat=body.summaryformat,
         token=token,
     )
 
@@ -157,6 +162,53 @@ def module_action(
     )
 
 
+@router.post("/courses/{course_id}/sections/{section_id}/activities")
+def create_activity(
+    course_id: int,
+    section_id: int,
+    body: CreateActivityRequest,
+    token: str = Depends(moodle_token),
+):
+    """Create an activity in a section (Sprint A: modname=assign)."""
+    return activities.create_activity(
+        course_id=course_id,
+        section_id=section_id,
+        modname=body.modname,
+        settings=body.settings,
+        token=token,
+    )
+
+
+@router.put("/courses/{course_id}/activities/{cmid}")
+def update_activity(
+    course_id: int,
+    cmid: int,
+    body: UpdateActivityRequest,
+    token: str = Depends(moodle_token),
+):
+    """Update activity authoring settings (Sprint A: assign)."""
+    return activities.update_activity(
+        course_id=course_id,
+        cmid=cmid,
+        settings=body.settings,
+        token=token,
+    )
+
+
+@router.get("/courses/{course_id}/activities/{cmid}")
+def get_activity_authoring(
+    course_id: int,
+    cmid: int,
+    token: str = Depends(moodle_token),
+):
+    """Load authoring settings for the activity editor (Sprint A: assign)."""
+    return activities.get_activity_authoring(
+        course_id=course_id,
+        cmid=cmid,
+        token=token,
+    )
+
+
 @router.post("/courses/{course_id}/modules")
 def new_module(
     course_id: int,
@@ -173,8 +225,16 @@ def new_module(
 
 
 @router.put("/courses/{course_id}/modules/{cmid}/settings")
-def module_settings(course_id: int, cmid: int, modname: str = "unknown"):
-    """Full module settings editing requires local_espace."""
-    # TODO(local_espace): local_espace_upsert_module
-    _ = course_id
-    return course_editor.unsupported_module_settings(cmid, modname)
+def module_settings(
+    course_id: int,
+    cmid: int,
+    body: UpdateActivityRequest,
+    token: str = Depends(moodle_token),
+):
+    """Legacy path — delegates to Activities update for supported types."""
+    return activities.update_activity(
+        course_id=course_id,
+        cmid=cmid,
+        settings=body.settings,
+        token=token,
+    )

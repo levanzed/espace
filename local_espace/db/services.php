@@ -124,6 +124,18 @@ $functions = [
             MOODLE_OFFICIAL_MOBILE_SERVICE,
         ],
     ],
+
+    'local_espace_upsert_module' => [
+        'classname'   => 'local_espace\external\module',
+        'methodname'  => 'upsert',
+        'description' => 'Create or update a course module (Sprint A: modname=assign). Fills official WS gap for full activity settings.',
+        'type'        => 'write',
+        'capabilities'=> 'local/espace:managemodules,moodle/course:manageactivities',
+        'ajax'        => false,
+        'services'    => [
+            MOODLE_OFFICIAL_MOBILE_SERVICE,
+        ],
+    ],
 ];
 
 $services = [
@@ -137,6 +149,7 @@ $services = [
             'local_espace_delete_section',
             'local_espace_get_section',
             'local_espace_list_sections',
+            'local_espace_upsert_module',
         ],
         'restrictedusers' => 0,
         'enabled' => 1,

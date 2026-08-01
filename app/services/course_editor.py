@@ -120,6 +120,9 @@ def section_action(
     section_ids: list[int],
     target_section_id: int | None,
     token: str,
+    name: str | None = None,
+    summary: str | None = None,
+    summaryformat: int = 1,
 ) -> Any:
     if action not in SECTION_ACTIONS:
         raise HTTPException(
@@ -128,12 +131,16 @@ def section_action(
         )
 
     if action == "section_add":
-        return _call_local_espace(
-            "local_espace_create_section",
-            token,
-            courseid=course_id,
-            position=0,
-        )
+        params: dict[str, Any] = {
+            "courseid": course_id,
+            "position": 0,
+            "summaryformat": summaryformat,
+        }
+        if name is not None:
+            params["name"] = name
+        if summary is not None:
+            params["summary"] = summary
+        return _call_local_espace("local_espace_create_section", token, **params)
 
     if action == "section_hide":
         results = [
@@ -258,7 +265,7 @@ def new_module(
     """Create a module via core_courseformat_new_module.
 
     Only works for modules advertising FEATURE_QUICKCREATE.
-    Full content/settings editing remains TODO(local_espace).
+    Full Assignment authoring uses Activities API → local_espace_upsert_module.
     """
     params: dict[str, Any] = {
         "courseid": course_id,
@@ -278,10 +285,13 @@ def new_module(
                     "status": "unsupported",
                     "reason": (
                         f"Moodle module '{modname}' does not support FEATURE_QUICKCREATE "
-                        "or the course format does not support components."
+                        "or the course format does not support components. "
+                        "For Assignment authoring use POST "
+                        f"/courses/{course_id}/sections/{section_id}/activities "
+                        "with modname=assign."
                     ),
                     "extension": "local_espace_upsert_module",
-                    "todo": "TODO(local_espace): implement full module create/edit with settings and content",
+                    "todo": "Use Activities API for assign; other modnames TBD",
                     "moodle": exc.raw,
                 },
             ) from exc
@@ -296,14 +306,13 @@ def new_module(
 
 
 def unsupported_module_settings(cmid: int, modname: str) -> dict[str, Any]:
-    # TODO(local_espace): local_espace_upsert_module
+    """Legacy helper retained for callers that still need an unsupported envelope."""
     return {
         "status": "unsupported",
         "reason": (
-            f"Official Moodle WS cannot edit full settings/content for '{modname}' "
-            f"(cmid={cmid}). Only structural actions and limited student-facing "
-            "mod_* APIs exist."
+            f"Use Activities API for authoring. Sprint A supports assign via "
+            f"PUT /courses/{{id}}/activities/{cmid} (modname={modname})."
         ),
         "extension": "local_espace_upsert_module",
-        "todo": "TODO(local_espace): create/edit module settings, files, HTML content, availability, completion",
+        "todo": "Prefer /courses/{id}/activities/{cmid}; other modnames coming later",
     }

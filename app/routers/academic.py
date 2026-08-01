@@ -6,6 +6,7 @@ from app.deps import current_userid, moodle_token
 from app.models.academic import (
     CalendarEventRequest,
     EnrolUserRequest,
+    FileUploadRequest,
     GroupCreateRequest,
     ManualCompletionRequest,
 )
@@ -139,6 +140,24 @@ def delete_event(event_id: int, token: str = Depends(moodle_token)):
 @router.get("/files/draft-itemid")
 def unused_draft_itemid(token: str = Depends(moodle_token)):
     return academic.get_unused_draft_itemid(token)
+
+
+@router.post("/files/upload")
+def upload_file(
+    body: FileUploadRequest,
+    token: str = Depends(moodle_token),
+):
+    """Upload base64 file content into a Moodle file area (typically user/draft)."""
+    return academic.upload_file(
+        file_content_base64=body.filecontent_base64,
+        filename=body.filename,
+        contextid=body.contextid,
+        component=body.component,
+        filearea=body.filearea,
+        itemid=body.itemid,
+        filepath=body.filepath,
+        token=token,
+    )
 
 
 # Messages / notifications
