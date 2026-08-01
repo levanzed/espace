@@ -47,11 +47,11 @@ Legend:
 # ❌ Completion settings configuration
 #    TODO(local_espace): local_espace_set_completion
 
-# ✅ core_files_get_unused_draft_itemid ← GET /files/draft-itemid
-# ✅ core_files_upload ← POST /files/upload (Assignment intro attachments)
+# ✅ core_files_get_unused_draft_itemid ← GET /files/draft-itemid (on Mobile)
+# ⚠️ core_files_upload — NOT on moodle_mobile_app; do not use for ESPACE.
+#    Prefer POST /webservice/upload.php with Mobile token (Moodle App pattern).
 #
-# Auth: login/token.php service=espace (single ESPACE external service).
-# Allowlist (living): docs/ESPACE_WS_ALLOWLIST.md + local_espace/db/services.php
+# Auth: login/token.php service=moodle_mobile_app (per-user token → JWT).
 # Deploy: docs/DEPLOYMENT.md
 
 # Participants / groups / enrolment / grades / calendar

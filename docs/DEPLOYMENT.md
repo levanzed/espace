@@ -1,24 +1,29 @@
 # ESPACE API deployment notes
 
-## Architecture (single Moodle service)
+## Authentication (current)
 
-ESPACE uses **one** Moodle external service and **one** per-user token:
+ESPACE authenticates users via Moodle Mobile web service:
+
+```
+Flutter → FastAPI POST /login
+       → Moodle login/token.php (service=moodle_mobile_app)
+       → per-user Moodle token embedded in JWT
+```
 
 | Item | Value |
 |------|--------|
-| Service name | **ESPACE** |
-| Shortname | `espace` |
-| Login | `login/token.php` with `service=espace` |
-| Allowlist | `local_espace/db/services.php` + `docs/ESPACE_WS_ALLOWLIST.md` |
+| Login service | `moodle_mobile_app` |
+| Token | Per-user Mobile-service token in JWT |
+| Fallback | Optional `MOODLE_TOKEN` (same service family if used) |
 
-There is **no** dual-token setup and **no** dependency on `moodle_mobile_app` for the ESPACE app.
+`local_espace_*` functions are registered onto the official Mobile service so section and Assignment upsert calls work with that token.
 
 ## Environment variables
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
-| `MOODLE_URL` | Yes | Moodle site base URL (no trailing slash) |
-| `MOODLE_TOKEN` | Optional | Fallback site token (must be an **ESPACE**-service token if set) |
+| `MOODLE_URL` | Yes | Moodle site base URL |
+| `MOODLE_TOKEN` | Optional | Fallback site token |
 | `JWT_SECRET_KEY` | Yes | Signs ESPACE JWTs |
 
 ```env
@@ -27,34 +32,22 @@ MOODLE_TOKEN=
 JWT_SECRET_KEY=change-me
 ```
 
-Do not commit `.env` or real tokens. Remove any leftover `MOODLE_ESPACE_TOKEN` from older experiments.
+Do not use `service=espace` or `MOODLE_ESPACE_TOKEN` for app login (abandoned experiment).
 
-## Deploy / upgrade
+## Plugin
 
-1. Copy/sync `local/espace/` (plugin ≥ **1.1.5**).
-2. **Site administration → Notifications** — upgrade `local_espace`.
-3. **External services → ESPACE**
-   - Enabled
-   - Shortname `espace`
-   - Functions match `docs/ESPACE_WS_ALLOWLIST.md`
-4. Deploy FastAPI (`auth` uses `service=espace`).
-5. **Users must log in again** (old Mobile-service JWTs will fail WS calls).
+Install/upgrade `local/espace/` (Notifications). Ensure Mobile service remains enabled and `local_espace_*` functions are listed on it after upgrade.
 
-```bash
-cd /opt/containers/espace   # or your compose path
-docker compose up -d --build espace-api
-```
+## Assignment intro attachments (next)
 
-## Verification (Sprint A slice)
+Do **not** rely on `core_files_upload` with Mobile tokens. Prefer Moodle’s official
+`POST /webservice/upload.php` draft upload (same path as the Moodle App). See the
+implementation plan produced with the auth revert / upload.php research.
 
-- [ ] Login succeeds with ESPACE service
-- [ ] Course list and course contents load
-- [ ] Section create / rename / move / hide / show / delete
-- [ ] Create Assignment (Activities API)
-- [ ] Intro attachment upload (`core_files_upload`)
-- [ ] Edit Assignment / save
-- [ ] Module hide / show / delete via courseformat
+## Verification
 
-## Growing the allowlist
-
-When enabling grades, forum, quiz, etc., add the required official WS to the ESPACE service allowlist (see `docs/ESPACE_WS_ALLOWLIST.md`) — do not switch back to Mobile or dual tokens.
+- [ ] Login
+- [ ] Courses / sections
+- [ ] Assignment create (without attachments)
+- [ ] Assignment edit
+- [ ] Module hide/show/delete

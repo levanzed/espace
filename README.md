@@ -60,8 +60,8 @@ PostgreSQL
 
 See `docs/MOODLE_WS_CAPABILITIES.md` for the full capability matrix.
 
-Deployment (single ESPACE Moodle service, env vars): `docs/DEPLOYMENT.md`  
-WS allowlist (living): `docs/ESPACE_WS_ALLOWLIST.md`
+Deployment (OCI / Docker, Mobile auth): `docs/DEPLOYMENT.md`  
+WS notes: `docs/ESPACE_WS_ALLOWLIST.md`
 
 ---
 

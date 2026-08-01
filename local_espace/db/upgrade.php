@@ -78,5 +78,10 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080105, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080106) {
+        // Restore Mobile service membership for local_espace WS (app auth = moodle_mobile_app).
+        upgrade_plugin_savepoint(true, 2026080106, 'local', 'espace');
+    }
+
     return true;
 }
