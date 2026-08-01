@@ -102,7 +102,9 @@ final class SectionValidator {
 
         if ($summary !== null) {
             $result['summary'] = clean_param($summary, PARAM_RAW);
-            $allowedformats = [FORMAT_HTML, FORMAT_MOODLE, FORMAT_PLAIN, FORMAT_MARKDOWN];
+            // Moodle FORMAT_* are strings ('0','1','2','4') in 5.2.1 — cast before strict in_array.
+            $summaryformat = (int) $summaryformat;
+            $allowedformats = array_map('intval', [FORMAT_HTML, FORMAT_MOODLE, FORMAT_PLAIN, FORMAT_MARKDOWN]);
             if (!in_array($summaryformat, $allowedformats, true)) {
                 throw new moodle_exception('errorinvalidsummaryformat', 'local_espace');
             }

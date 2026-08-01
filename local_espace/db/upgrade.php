@@ -57,5 +57,10 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080101, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080102) {
+        // Fix FORMAT_* string vs int strict in_array in Assignment/Section validators.
+        upgrade_plugin_savepoint(true, 2026080102, 'local', 'espace');
+    }
+
     return true;
 }

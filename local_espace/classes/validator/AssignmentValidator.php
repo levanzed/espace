@@ -60,8 +60,12 @@ final class AssignmentValidator {
         $out['name'] = $name;
 
         $out['intro'] = isset($settings['intro']) ? (string) $settings['intro'] : '';
-        $introformat = isset($settings['introformat']) ? (int) $settings['introformat'] : FORMAT_HTML;
-        if (!in_array($introformat, [FORMAT_MOODLE, FORMAT_HTML, FORMAT_PLAIN, FORMAT_MARKDOWN], true)) {
+        // Moodle FORMAT_* are strings ('0','1','2','4') in 5.2.1 weblib.php.
+        // Cast needle to int for storage; compare with intval(haystack) + strict
+        // (core uses loose in_array; either works — avoid int vs string strict miss).
+        $introformat = isset($settings['introformat']) ? (int) $settings['introformat'] : (int) FORMAT_HTML;
+        $allowedformats = array_map('intval', [FORMAT_MOODLE, FORMAT_HTML, FORMAT_PLAIN, FORMAT_MARKDOWN]);
+        if (!in_array($introformat, $allowedformats, true)) {
             throw new moodle_exception('errorinvalidsummaryformat', 'local_espace');
         }
         $out['introformat'] = $introformat;
