@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.deps import current_userid, moodle_token
 from app.models.academic import (
@@ -187,12 +187,40 @@ def update_activity(
     token: str = Depends(moodle_token),
 ):
     """Update activity authoring settings (Sprint A: assign)."""
-    return activities.update_activity(
-        course_id=course_id,
-        cmid=cmid,
-        settings=body.settings,
-        token=token,
+    # TEMP DEBUG: Assignment edit — remove after root cause identified
+    import json
+    import traceback
+
+    body_json = json.dumps(body.model_dump(), default=str)
+    print(
+        f"EDIT DEBUG: PUT /courses/{course_id}/activities/{cmid} "
+        f"courseid={course_id} cmid={cmid} request_body={body_json}",
+        flush=True,
     )
+    try:
+        result = activities.update_activity(
+            course_id=course_id,
+            cmid=cmid,
+            settings=body.settings,
+            token=token,
+        )
+    except HTTPException as exc:
+        print(
+            f"EDIT DEBUG: HTTPException before re-raise status={exc.status_code} "
+            f"detail={exc.detail!r}",
+            flush=True,
+        )
+        raise
+    except Exception as exc:
+        print(
+            f"EDIT DEBUG: unexpected exception type={type(exc).__name__} "
+            f"message={exc!s}",
+            flush=True,
+        )
+        print(f"EDIT DEBUG: traceback:\n{traceback.format_exc()}", flush=True)
+        raise
+    print(f"EDIT DEBUG: PUT activities success result={result!r}", flush=True)
+    return result
 
 
 @router.get("/courses/{course_id}/activities/{cmid}")
