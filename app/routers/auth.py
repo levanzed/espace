@@ -10,12 +10,20 @@ router = APIRouter()
 @router.post("/login")
 def login(request: LoginRequest):
 
+    # TEMP DEBUG: prove this handler executes — remove after debugging
+    print("AUTH DEBUG: routers.auth.login() entered", flush=True)
+
     data = authenticate(
         request.username,
         request.password,
     )
 
     if "token" not in data:
+        print(
+            "AUTH DEBUG: routers.auth.login() raising 401 "
+            f"(moodle payload keys={list(data.keys()) if isinstance(data, dict) else type(data)})",
+            flush=True,
+        )
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password",
@@ -30,6 +38,7 @@ def login(request: LoginRequest):
         }
     )
 
+    print("AUTH DEBUG: routers.auth.login() success", flush=True)
     return {
         "access_token": access_token,
         "token_type": "bearer",
