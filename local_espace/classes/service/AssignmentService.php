@@ -34,6 +34,7 @@ namespace local_espace\service;
 defined('MOODLE_INTERNAL') || die();
 
 use assign;
+use grade_item;
 use local_espace\helper\FileHelper;
 use local_espace\helper\ModuleHelper;
 use local_espace\output\ApiResponse;

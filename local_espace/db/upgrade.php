@@ -94,5 +94,10 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080107, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080108) {
+        // Fix namespaced resolution of core grade_item in AssignmentService (update path).
+        upgrade_plugin_savepoint(true, 2026080108, 'local', 'espace');
+    }
+
     return true;
 }
