@@ -83,5 +83,16 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080106, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080107) {
+        // 1.1.5 (auth experiment) cleared services=>[MOODLE_OFFICIAL_MOBILE_SERVICE], which
+        // deleted local_espace_* from moodle_mobile_app via external_update_descriptions.
+        // 1.1.6 restored the services.php declaration, but plugin-only upgrades update the
+        // external_functions.services column without always re-injecting into built-in
+        // services. Force both steps so Mobile tokens can call local_espace_* again.
+        external_update_descriptions('local_espace');
+        external_update_services();
+        upgrade_plugin_savepoint(true, 2026080107, 'local', 'espace');
+    }
+
     return true;
 }

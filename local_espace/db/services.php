@@ -17,9 +17,10 @@
 /**
  * External service definitions for local_espace.
  *
- * ESPACE app authentication uses moodle_mobile_app. local_espace functions are
- * therefore registered onto MOODLE_OFFICIAL_MOBILE_SERVICE so Mobile tokens work.
- * The built-in ESPACE service allowlist remains for optional/future use.
+ * App auth uses service=moodle_mobile_app. Every local_espace_* function MUST list
+ * MOODLE_OFFICIAL_MOBILE_SERVICE in its $functions[...]['services'] entry so Mobile
+ * tokens can call it. The built-in ESPACE service ($services below) is optional and
+ * is NOT required for the app to function.
  *
  * @package    local_espace
  * @copyright  2026 LevanzEd / ESPACE
