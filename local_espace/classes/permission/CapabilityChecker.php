@@ -40,6 +40,15 @@ use required_capability_exception;
 final class CapabilityChecker {
 
     /**
+     * Whether the ESPACE local plugin web services are enabled.
+     *
+     * @return bool
+     */
+    public function is_plugin_enabled(): bool {
+        return (bool) get_config('local_espace', 'enabled');
+    }
+
+    /**
      * Require an authenticated session / valid token user.
      *
      * @throws require_login_exception
@@ -51,10 +60,14 @@ final class CapabilityChecker {
     /**
      * Require the plugin to be enabled in admin settings.
      *
+     * Owned here (autoloaded permission layer). lib.php globals are thin wrappers.
+     *
      * @throws moodle_exception
      */
     public function require_plugin_enabled(): void {
-        local_espace_require_enabled();
+        if (!$this->is_plugin_enabled()) {
+            throw new moodle_exception('errorplugindisabled', 'local_espace');
+        }
     }
 
     /**

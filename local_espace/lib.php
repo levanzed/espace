@@ -27,21 +27,25 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Whether the ESPACE local plugin web services are enabled.
  *
+ * Thin wrapper for legacy/callback callers. Source of truth:
+ * \local_espace\permission\CapabilityChecker::is_plugin_enabled().
+ *
  * @return bool
  */
 function local_espace_is_enabled(): bool {
-    return (bool) get_config('local_espace', 'enabled');
+    return (new \local_espace\permission\CapabilityChecker())->is_plugin_enabled();
 }
 
 /**
  * Assert that the plugin is enabled or throw.
  *
+ * Thin wrapper for legacy/callback callers. Source of truth:
+ * \local_espace\permission\CapabilityChecker::require_plugin_enabled().
+ *
  * @throws moodle_exception
  */
 function local_espace_require_enabled(): void {
-    if (!local_espace_is_enabled()) {
-        throw new moodle_exception('errorplugindisabled', 'local_espace');
-    }
+    (new \local_espace\permission\CapabilityChecker())->require_plugin_enabled();
 }
 
 /**
