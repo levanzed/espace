@@ -176,17 +176,19 @@ final class AssignmentService extends BaseService {
      * @return stdClass
      */
     private function build_create_moduleinfo(stdClass $course, int $sectionnum, array $settings): stdClass {
-        // prepare_new_moduleinfo_data → can_add_moduleinfo (caps + module allowed).
-        $moduleinfo = prepare_new_moduleinfo_data($course, 'assign', $sectionnum);
-        $moduleinfo->modulename = 'assign';
-        $moduleinfo->add = 'assign';
-        $moduleinfo->section = $sectionnum;
+        // Moodle 5.2.1: prepare_new_moduleinfo_data() returns
+        // array($module, $context, $cw, $cm, $data) — see course/modlib.php.
+        // Core callers (modedit.php, format stateactions) use only $data as moduleinfo.
+        [, , , , $data] = prepare_new_moduleinfo_data($course, 'assign', $sectionnum);
+        $data->modulename = 'assign';
+        $data->add = 'assign';
+        $data->section = $sectionnum;
 
-        $this->apply_assign_defaults($moduleinfo);
-        $this->apply_sprint_a_settings($moduleinfo, $settings, true, null, null);
-        $this->apply_default_feedback_plugins($moduleinfo);
+        $this->apply_assign_defaults($data);
+        $this->apply_sprint_a_settings($data, $settings, true, null, null);
+        $this->apply_default_feedback_plugins($data);
 
-        return $moduleinfo;
+        return $data;
     }
 
     /**

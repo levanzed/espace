@@ -62,5 +62,10 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080102, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080103) {
+        // Fix prepare_new_moduleinfo_data unpack (returns 5-tuple; 5th is stdClass moduleinfo).
+        upgrade_plugin_savepoint(true, 2026080103, 'local', 'espace');
+    }
+
     return true;
 }
