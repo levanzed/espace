@@ -147,7 +147,7 @@ def upload_file(
     body: FileUploadRequest,
     token: str = Depends(moodle_token),
 ):
-    """Upload base64 file content into a Moodle file area (typically user/draft)."""
+    """Upload one file into the Moodle user draft area (via /webservice/upload.php)."""
     return academic.upload_file(
         file_content_base64=body.filecontent_base64,
         filename=body.filename,

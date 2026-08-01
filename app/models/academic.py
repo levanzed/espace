@@ -157,7 +157,11 @@ class CalendarEventRequest(BaseModel):
 
 
 class FileUploadRequest(BaseModel):
-    """Upload a file into a Moodle draft (or other) file area via core_files_upload."""
+    """Upload a file into a Moodle user draft area via /webservice/upload.php.
+
+    contextid/component/filearea are accepted for API compatibility; Moodle 5.2.1
+    upload.php always writes to user/draft and does not read those fields.
+    """
 
     filecontent_base64: str
     filename: str

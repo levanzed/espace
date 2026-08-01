@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.services.moodle import MoodleError, call, raise_http
+from app.services.moodle import MoodleError, call, raise_http, upload_draft_file
 
 
 # Grades
@@ -105,17 +105,20 @@ def upload_file(
     filepath: str,
     token: str,
 ) -> Any:
+    """Upload one file into the Moodle user draft area.
+
+    Request fields contextid/component/filearea are kept for API compatibility with
+    Flutter; Moodle 5.2.1 upload.php always stores into user/draft and ignores them.
+    """
+    # Signature retained; contextid/component/filearea unused by upload.php.
+    _ = (contextid, component, filearea)
     try:
-        return call(
-            "core_files_upload",
-            token=token,
-            contextid=contextid,
-            component=component,
-            filearea=filearea,
-            itemid=itemid,
-            filepath=filepath,
+        return upload_draft_file(
+            file_content_base64=file_content_base64,
             filename=filename,
-            filecontent=file_content_base64,
+            itemid=itemid,
+            filepath=filepath or "/",
+            token=token,
         )
     except MoodleError as exc:
         raise_http(exc)
