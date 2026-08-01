@@ -97,12 +97,6 @@ def call(
         raise HTTPException(status_code=502, detail="Invalid JSON from Moodle") from exc
 
     if isinstance(data, dict) and data.get("exception"):
-        # TEMP DEBUG: Assignment edit — remove after root cause identified
-        print(
-            f"EDIT DEBUG: Moodle WS exception body function={function} "
-            f"full_response={data!r}",
-            flush=True,
-        )
         raise MoodleError(
             message=data.get("message") or data.get("exception") or "Moodle error",
             errorcode=data.get("errorcode"),
@@ -114,13 +108,6 @@ def call(
 
 def raise_http(exc: MoodleError, *, status_code: int = 400) -> None:
     """Convert a MoodleError into an HTTPException."""
-    # TEMP DEBUG: Assignment edit — remove after root cause identified
-    print(
-        f"EDIT DEBUG: raise_http status={status_code} type={type(exc).__name__} "
-        f"message={exc.message!r} errorcode={exc.errorcode!r} "
-        f"moodle_raw={exc.raw!r}",
-        flush=True,
-    )
     raise HTTPException(
         status_code=status_code,
         detail={

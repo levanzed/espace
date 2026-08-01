@@ -94,25 +94,10 @@ def update_activity(
     settings: dict[str, Any],
     token: str,
 ) -> Any:
-    # TEMP DEBUG: Assignment edit — remove after root cause identified
-    print(
-        f"EDIT DEBUG: activities.update_activity course_id={course_id} cmid={cmid} "
-        f"settings={settings!r}",
-        flush=True,
-    )
     resolved = _resolve_cm(course_id=course_id, cmid=cmid, token=token)
     resolved_modname = (resolved["modname"] or "").strip().lower()
-    print(
-        f"EDIT DEBUG: resolved activity type modname={resolved_modname!r} "
-        f"sectionid={resolved.get('sectionid')!r}",
-        flush=True,
-    )
 
     if resolved_modname not in SUPPORTED_CREATE_MODNAMES:
-        print(
-            f"EDIT DEBUG: raising 501 unsupported modname={resolved_modname!r}",
-            flush=True,
-        )
         _unsupported(resolved_modname or "unknown", operation="update")
 
     if resolved_modname == "assign":
@@ -124,10 +109,6 @@ def update_activity(
             token=token,
         )
 
-    print(
-        f"EDIT DEBUG: raising 501 fallthrough modname={resolved_modname!r}",
-        flush=True,
-    )
     _unsupported(resolved_modname, operation="update")
 
 

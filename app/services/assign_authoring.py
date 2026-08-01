@@ -17,13 +17,6 @@ def _call_local_espace(function: str, token: str, **params: Any) -> Any:
     try:
         return call(function, token=token, **params)
     except MoodleError as exc:
-        # TEMP DEBUG: Assignment edit — remove after root cause identified
-        print(
-            f"EDIT DEBUG: MoodleError from {function} type={type(exc).__name__} "
-            f"message={exc.message!r} errorcode={exc.errorcode!r} "
-            f"full_moodle_response={exc.raw!r}",
-            flush=True,
-        )
         raise_http(exc)
 
 
@@ -42,23 +35,9 @@ def upsert_assign(
 ) -> Any:
     """Create (cmid=0) or update an assignment via local_espace_upsert_module."""
     if "name" not in settings or not str(settings.get("name", "")).strip():
-        # TEMP DEBUG: Assignment edit — remove after root cause identified
-        print(
-            "EDIT DEBUG: raising HTTP 400 because settings.name is required "
-            f"course_id={course_id} section_id={section_id} cmid={cmid} "
-            f"settings={settings!r}",
-            flush=True,
-        )
         raise HTTPException(status_code=400, detail="settings.name is required")
 
     payload = settings_for_plugin(settings)
-    # TEMP DEBUG: Assignment edit — remove after root cause identified
-    print(
-        f"EDIT DEBUG: upsert_assign calling local_espace_upsert_module "
-        f"courseid={course_id} sectionid={section_id} cmid={cmid} "
-        f"settings_payload={payload!r}",
-        flush=True,
-    )
     return _call_local_espace(
         "local_espace_upsert_module",
         token,
