@@ -48,7 +48,11 @@ Legend:
 #    TODO(local_espace): local_espace_set_completion
 
 # ✅ core_files_get_unused_draft_itemid ← GET /files/draft-itemid
-# ✅ core_files_upload ← POST /files/upload (Activity authoring attachments)
+# ✅ core_files_upload ← POST /files/upload (Assignment intro attachments)
+#
+# Auth: login/token.php service=espace (single ESPACE external service).
+# Allowlist (living): docs/ESPACE_WS_ALLOWLIST.md + local_espace/db/services.php
+# Deploy: docs/DEPLOYMENT.md
 
 # Participants / groups / enrolment / grades / calendar
 # ✅ See services in app/services/{participants,academic,grades}.py

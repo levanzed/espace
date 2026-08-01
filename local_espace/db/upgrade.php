@@ -67,5 +67,16 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080103, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080104) {
+        // ESPACE built-in service: include core_files_upload + draft itemid.
+        upgrade_plugin_savepoint(true, 2026080104, 'local', 'espace');
+    }
+
+    if ($oldversion < 2026080105) {
+        // Single-service model: minimal living allowlist for Auth/Sections/Assign Sprint A/Files.
+        // Remove Mobile auto-membership from local_espace function definitions.
+        upgrade_plugin_savepoint(true, 2026080105, 'local', 'espace');
+    }
+
     return true;
 }

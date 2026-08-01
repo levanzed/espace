@@ -7,16 +7,12 @@ TODO(local_espace) extension points.
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import requests
 from fastapi import HTTPException
 
 from app.config import MOODLE_TOKEN, MOODLE_URL
-
-# TEMP DEBUG: Sprint A integration — remove after root cause identified
-logger = logging.getLogger("espace.moodle.debug")
 
 
 class MoodleError(Exception):
@@ -27,15 +23,6 @@ class MoodleError(Exception):
         self.message = message
         self.errorcode = errorcode
         self.raw = raw or {}
-
-
-def _redact_for_log(payload: dict[str, Any]) -> dict[str, Any]:
-    """Copy Moodle REST payload with tokens removed for safe logging."""
-    redacted = dict(payload)
-    for key in ("wstoken", "token", "password"):
-        if key in redacted and redacted[key] is not None:
-            redacted[key] = "***REDACTED***"
-    return redacted
 
 
 def _flatten_params(params: dict[str, Any], prefix: str = "") -> dict[str, Any]:
@@ -71,24 +58,23 @@ def call(
 
     Uses POST by default (required for write operations and large payloads).
     Nested lists/dicts are flattened to Moodle's bracket notation.
+
+    The caller token must be issued for the ESPACE external service
+    (shortname=espace). See docs/ESPACE_WS_ALLOWLIST.md.
     """
     if not MOODLE_URL:
         raise HTTPException(status_code=500, detail="MOODLE_URL is not configured")
 
+    wstoken = token or MOODLE_TOKEN
+    if not wstoken:
+        raise HTTPException(status_code=500, detail="Moodle token is not configured")
+
     payload = {
-        "wstoken": token or MOODLE_TOKEN,
+        "wstoken": wstoken,
         "wsfunction": function,
         "moodlewsrestformat": "json",
         **_flatten_params(params),
     }
-
-    # TEMP DEBUG: Sprint A integration — remove after root cause identified
-    logger.error(
-        "Moodle call → function=%s method=%s payload=%s",
-        function,
-        method.upper(),
-        _redact_for_log(payload),
-    )
 
     try:
         if method.upper() == "GET":
@@ -106,40 +92,15 @@ def call(
         response.raise_for_status()
         data = response.json()
     except requests.RequestException as exc:
-        logger.exception(
-            "Moodle transport failure function=%s: %s",
-            function,
-            exc,
-        )
         raise HTTPException(status_code=502, detail=f"Moodle request failed: {exc}") from exc
     except ValueError as exc:
-        logger.exception(
-            "Moodle invalid JSON function=%s raw_text=%s",
-            function,
-            getattr(response, "text", None),
-        )
         raise HTTPException(status_code=502, detail="Invalid JSON from Moodle") from exc
 
     if isinstance(data, dict) and data.get("exception"):
-        # TEMP DEBUG: Sprint A integration — remove after root cause identified
-        logger.error(
-            "MoodleError from moodle.call() function=%s message=%s errorcode=%s raw=%s",
-            function,
-            data.get("message") or data.get("exception"),
-            data.get("errorcode"),
-            data,
-        )
         raise MoodleError(
             message=data.get("message") or data.get("exception") or "Moodle error",
             errorcode=data.get("errorcode"),
             raw=data,
-        )
-
-    # TEMP DEBUG: Sprint A integration — remove after root cause identified
-    if function == "local_espace_upsert_module":
-        logger.error(
-            "local_espace_upsert_module complete response=%s",
-            data,
         )
 
     return data
@@ -147,14 +108,6 @@ def call(
 
 def raise_http(exc: MoodleError, *, status_code: int = 400) -> None:
     """Convert a MoodleError into an HTTPException."""
-    # TEMP DEBUG: Sprint A integration — remove after root cause identified
-    logger.error(
-        "raise_http status=%s message=%s errorcode=%s raw=%s",
-        status_code,
-        exc.message,
-        exc.errorcode,
-        exc.raw,
-    )
     raise HTTPException(
         status_code=status_code,
         detail={

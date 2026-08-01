@@ -10,7 +10,7 @@ def authenticate(username: str, password: str):
         data={
             "username": username,
             "password": password,
-            "service": "moodle_mobile_app",
+            "service": "espace",
         },
     )
 

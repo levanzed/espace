@@ -97,9 +97,13 @@ These classes provide capability matrices and constructor wiring so future sprin
 1. Copy this directory to `{moodle}/local/espace/`
 2. Visit **Site administration → Notifications** to install
 3. Enable the **ESPACE** external service  
-   (**Site administration → Server → Web services → External services**)
-4. Add authorised users / tokens used by the FastAPI backend
-5. Ensure the token user has:
+   (**Site administration → Server → Web services → External services**)  
+   Shortname must be `espace` (FastAPI login uses `service=espace`).
+4. Add authorised users / tokens used by the FastAPI backend (or rely on
+   `login/token.php` with `service=espace`)
+5. Keep the ESPACE service function allowlist in sync with
+   `docs/ESPACE_WS_ALLOWLIST.md` / `db/services.php` (living list — grow per feature).
+6. Ensure the token user has:
    - `local/espace:use`
    - `local/espace:managesections` (sections)
    - `local/espace:managemodules` (module upsert)

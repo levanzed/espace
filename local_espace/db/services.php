@@ -17,8 +17,10 @@
 /**
  * External service definitions for local_espace.
  *
- * Only functions that fill official Moodle WS gaps are registered.
- * Do not duplicate core_course_* / core_courseformat_* where adequate.
+ * $functions: only local_espace-owned WS (official WS gaps).
+ * $services['ESPACE']['functions']: living allowlist of every WS FastAPI may call
+ * for shipped features. Grow this list when new features add Moodle call() targets.
+ * See docs/ESPACE_WS_ALLOWLIST.md.
  *
  * @package    local_espace
  * @copyright  2026 LevanzEd / ESPACE
@@ -36,9 +38,6 @@ $functions = [
         'type'        => 'write',
         'capabilities'=> 'local/espace:managesections',
         'ajax'        => false,
-        'services'    => [
-            MOODLE_OFFICIAL_MOBILE_SERVICE,
-        ],
     ],
 
     'local_espace_rename_section' => [
@@ -48,9 +47,6 @@ $functions = [
         'type'        => 'write',
         'capabilities'=> 'local/espace:managesections',
         'ajax'        => false,
-        'services'    => [
-            MOODLE_OFFICIAL_MOBILE_SERVICE,
-        ],
     ],
 
     'local_espace_move_section' => [
@@ -60,9 +56,6 @@ $functions = [
         'type'        => 'write',
         'capabilities'=> 'local/espace:managesections,moodle/course:movesections',
         'ajax'        => false,
-        'services'    => [
-            MOODLE_OFFICIAL_MOBILE_SERVICE,
-        ],
     ],
 
     'local_espace_hide_section' => [
@@ -72,9 +65,6 @@ $functions = [
         'type'        => 'write',
         'capabilities'=> 'local/espace:managesections,moodle/course:sectionvisibility',
         'ajax'        => false,
-        'services'    => [
-            MOODLE_OFFICIAL_MOBILE_SERVICE,
-        ],
     ],
 
     'local_espace_show_section' => [
@@ -84,9 +74,6 @@ $functions = [
         'type'        => 'write',
         'capabilities'=> 'local/espace:managesections,moodle/course:sectionvisibility',
         'ajax'        => false,
-        'services'    => [
-            MOODLE_OFFICIAL_MOBILE_SERVICE,
-        ],
     ],
 
     'local_espace_delete_section' => [
@@ -96,9 +83,6 @@ $functions = [
         'type'        => 'write',
         'capabilities'=> 'local/espace:managesections',
         'ajax'        => false,
-        'services'    => [
-            MOODLE_OFFICIAL_MOBILE_SERVICE,
-        ],
     ],
 
     'local_espace_get_section' => [
@@ -108,9 +92,6 @@ $functions = [
         'type'        => 'read',
         'capabilities'=> 'local/espace:managesections',
         'ajax'        => false,
-        'services'    => [
-            MOODLE_OFFICIAL_MOBILE_SERVICE,
-        ],
     ],
 
     'local_espace_list_sections' => [
@@ -120,9 +101,6 @@ $functions = [
         'type'        => 'read',
         'capabilities'=> 'local/espace:managesections',
         'ajax'        => false,
-        'services'    => [
-            MOODLE_OFFICIAL_MOBILE_SERVICE,
-        ],
     ],
 
     'local_espace_upsert_module' => [
@@ -132,15 +110,25 @@ $functions = [
         'type'        => 'write',
         'capabilities'=> 'local/espace:managemodules,moodle/course:manageactivities',
         'ajax'        => false,
-        'services'    => [
-            MOODLE_OFFICIAL_MOBILE_SERVICE,
-        ],
     ],
 ];
 
 $services = [
     'ESPACE' => [
+        // Single supported external service for the ESPACE app (shortname=espace).
+        // Official core_*/mod_* names may appear here; do not re-declare them in $functions.
+        // Living allowlist — add functions when FastAPI gains new call() targets.
         'functions' => [
+            // Authentication / site
+            'core_webservice_get_site_info',
+
+            // Course browse (required to reach sections & activities)
+            'core_enrol_get_users_courses',
+            'core_course_get_contents',
+            'core_course_get_user_administration_options',
+            'core_course_get_user_navigation_options',
+
+            // Sections (local_espace)
             'local_espace_create_section',
             'local_espace_rename_section',
             'local_espace_move_section',
@@ -149,7 +137,17 @@ $services = [
             'local_espace_delete_section',
             'local_espace_get_section',
             'local_espace_list_sections',
+
+            // Activity structural ops (hide/show/delete/move cm)
+            'core_courseformat_update_course',
+
+            // Assignment Sprint A / Activities authoring
             'local_espace_upsert_module',
+            'mod_assign_get_assignments',
+
+            // File drafts / upload (Assignment attachments)
+            'core_files_get_unused_draft_itemid',
+            'core_files_upload',
         ],
         'restrictedusers' => 0,
         'enabled' => 1,

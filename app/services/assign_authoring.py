@@ -6,41 +6,18 @@ Reads use official mod_assign_get_assignments; writes use local_espace only.
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from fastapi import HTTPException
 
 from app.services.moodle import MoodleError, call, raise_http
 
-# TEMP DEBUG: Sprint A integration — remove after root cause identified
-logger = logging.getLogger("espace.assign_authoring.debug")
-
 
 def _call_local_espace(function: str, token: str, **params: Any) -> Any:
-    # TEMP DEBUG: Sprint A integration — remove after root cause identified
-    logger.error(
-        "_call_local_espace function=%s params=%s",
-        function,
-        {k: v for k, v in params.items()},
-    )
     try:
-        result = call(function, token=token, **params)
+        return call(function, token=token, **params)
     except MoodleError as exc:
-        logger.error(
-            "_call_local_espace MoodleError function=%s message=%s errorcode=%s raw=%s",
-            function,
-            exc.message,
-            exc.errorcode,
-            exc.raw,
-        )
         raise_http(exc)
-    logger.error(
-        "_call_local_espace success function=%s response=%s",
-        function,
-        result,
-    )
-    return result
 
 
 def settings_for_plugin(settings: dict[str, Any]) -> dict[str, Any]:
@@ -58,27 +35,9 @@ def upsert_assign(
 ) -> Any:
     """Create (cmid=0) or update an assignment via local_espace_upsert_module."""
     if "name" not in settings or not str(settings.get("name", "")).strip():
-        # TEMP DEBUG: Sprint A integration — remove after root cause identified
-        logger.error(
-            "upsert_assign rejected: settings.name required course_id=%s section_id=%s "
-            "cmid=%s settings=%s",
-            course_id,
-            section_id,
-            cmid,
-            settings,
-        )
         raise HTTPException(status_code=400, detail="settings.name is required")
 
     payload = settings_for_plugin(settings)
-    # TEMP DEBUG: Sprint A integration — remove after root cause identified
-    logger.error(
-        "upsert_assign → local_espace_upsert_module courseid=%s sectionid=%s cmid=%s "
-        "settings=%s",
-        course_id,
-        section_id,
-        cmid,
-        payload,
-    )
     return _call_local_espace(
         "local_espace_upsert_module",
         token,
@@ -201,6 +160,8 @@ def get_assign_for_cm(
         "courseid": course_id,
         "instance": int(assignment.get("id") or 0),
         "settings": assignment_to_authoring_settings(assignment, visible=visible),
+        # Existing intro attachment metadata from mod_assign_get_assignments (read-only UX).
+        "introattachments": assignment.get("introattachments") or [],
         "moodle": {
             "assignment": assignment,
         },

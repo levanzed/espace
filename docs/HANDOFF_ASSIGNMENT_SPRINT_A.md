@@ -13,7 +13,9 @@ Related blueprints (read in this order after this handoff):
 2. `docs/SECTION_SUBSYSTEM.md` — Section frozen status
 3. `docs/ASSIGNMENT_SUBSYSTEM.md` — full Assignment capability matrix and later sprints B–G
 4. `docs/MOODLE_WS_CAPABILITIES.md` — WS capability notes
-5. `AGENTS.md` — FastAPI agent responsibilities
+5. `docs/DEPLOYMENT.md` — single ESPACE-service auth and deploy
+6. `docs/ESPACE_WS_ALLOWLIST.md` — living Moodle WS allowlist
+7. `AGENTS.md` — FastAPI agent responsibilities
 
 ---
 
