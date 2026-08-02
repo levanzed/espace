@@ -48,11 +48,35 @@ Legend:
 #    TODO(local_espace): local_espace_set_completion
 
 # ✅ core_files_get_unused_draft_itemid ← GET /files/draft-itemid (on Mobile)
+# ✅ Draft upload ← POST /files/upload → Moodle /webservice/upload.php (Mobile App pattern)
 # ⚠️ core_files_upload — NOT on moodle_mobile_app; do not use for ESPACE.
-#    Prefer POST /webservice/upload.php with Mobile token (Moodle App pattern).
 #
 # Auth: login/token.php service=moodle_mobile_app (per-user token → JWT).
 # Deploy: docs/DEPLOYMENT.md
+# Post–Sprint A roadmap: docs/ASSIGNMENT_ROADMAP.md (Phase 1 = B1, Phase 2 = B2)
+# Sprint B implementation: docs/HANDOFF_ASSIGNMENT_SPRINT_B.md
+
+# ---------------------------------------------------------------------------
+# Assignment Sprint B — Student submission (B1) / Teacher grading (B2)
+# ---------------------------------------------------------------------------
+# Official WS only — no local_espace for submit/grade.
+# Handoff: docs/HANDOFF_ASSIGNMENT_SPRINT_B.md
+#
+# B1 — Student (target)
+# 🟡 mod_assign_get_submission_status ← GET /activity/{cmid}/assign/status
+#    (+ embedded in GET /activity/{cmid}; plugin fileurls need token — B1 backend)
+# 🟡 mod_assign_save_submission     ← POST /activity/{cmid}/assign/submission
+# 🟡 mod_assign_submit_for_grading ← POST /activity/{cmid}/assign/submit
+# ✅ upload.php                     ← POST /files/upload
+# ✅ core_files_get_unused_draft_itemid ← GET /files/draft-itemid
+#
+# B2 — Teacher (target)
+# ❌ mod_assign_list_participants   ← not exposed yet
+# ❌ mod_assign_save_grade          ← interactions only; no route yet
+# 🟡 mod_assign_get_submission_status (userid) ← teacher view student — B2
+# Optional: mod_assign_get_submissions, mod_assign_get_grades
+#
+# Out of scope Sprint B: rubrics, blind marking, workflow, teams, PDF annotate
 
 # Participants / groups / enrolment / grades / calendar
 # ✅ See services in app/services/{participants,academic,grades}.py
@@ -62,7 +86,8 @@ Legend:
 # ---------------------------------------------------------------------------
 
 # Learning browse/view — already covered by course contents + activity engine
-# ✅ Assignment submit flow — mod_assign_save_submission / submit_for_grading
+# 🟡 Assignment submit flow — mod_assign_save_submission / submit_for_grading
+#    (FastAPI partial; Flutter Phase 1: file submit + status UX — ASSIGNMENT_ROADMAP.md)
 # ✅ Forum discuss/reply/edit/delete — mod_forum_*
 # ✅ Quiz attempt flow — mod_quiz_start/save/process/review
 # ✅ Choice — mod_choice_*

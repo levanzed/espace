@@ -11,11 +11,13 @@ Related blueprints (read in this order after this handoff):
 
 1. `docs/HANDOFF_ASSIGNMENT_SPRINT_A.md` *(this file)*
 2. `docs/SECTION_SUBSYSTEM.md` — Section frozen status
-3. `docs/ASSIGNMENT_SUBSYSTEM.md` — full Assignment capability matrix and later sprints B–G
-4. `docs/MOODLE_WS_CAPABILITIES.md` — WS capability notes
-5. `docs/DEPLOYMENT.md` — single ESPACE-service auth and deploy
-6. `docs/ESPACE_WS_ALLOWLIST.md` — living Moodle WS allowlist
-7. `AGENTS.md` — FastAPI agent responsibilities
+3. `docs/ASSIGNMENT_SUBSYSTEM.md` — full Assignment capability matrix
+4. `docs/ASSIGNMENT_ROADMAP.md` — **post–Sprint A Tier A/B/C audit + Phases 1–3**
+5. `docs/HANDOFF_ASSIGNMENT_SPRINT_B.md` — **Sprint B commit plan + Mobile WS checklist**
+6. `docs/MOODLE_WS_CAPABILITIES.md` — WS capability notes
+7. `docs/DEPLOYMENT.md` — Mobile auth and deploy
+8. `docs/ESPACE_WS_ALLOWLIST.md` — living Moodle WS allowlist
+9. `AGENTS.md` — FastAPI agent responsibilities
 
 ---
 
@@ -335,7 +337,7 @@ A teacher must be able to, **without opening Moodle**:
 |------|-----|
 | Course/section browse | `core_course_get_contents` |
 | Read assignment for edit | `mod_assign_get_assignments` (primary); add plugin get only if insufficient |
-| File drafts / upload | `core_files_get_unused_draft_itemid`, `core_files_upload` |
+| File drafts / upload | `core_files_get_unused_draft_itemid` + **`POST /webservice/upload.php`** (not `core_files_upload`) |
 | Hide / show / delete CM | `core_courseformat_update_course` (`cm_hide`, `cm_show`, `cm_delete`) |
 | Grade categories / scales lists | `core_grades_*` / related **if available on site**; otherwise minimal safe defaults + document limitation |
 
@@ -487,19 +489,18 @@ Teacher account on a real course:
 
 ## 12. Next Immediate Task
 
-**Sprint A code is complete.** Next work is deploy/verify on OCI, then Sprint B when approved.
+**Sprint A code is complete.** Next: **Sprint B** per `docs/HANDOFF_ASSIGNMENT_SPRINT_B.md` (one commit at a time; deploy/test between commits).
 
 ### Ordered work for the next session
 
-1. **Commit** Sprint A changes in `espace` and `espace-app` when asked.  
-2. **Deploy** FastAPI; sync `local_espace` (version ≥ 2026080101); purge caches; enable `local_espace_upsert_module`.  
-3. **Verify** using §11 checklist on real Moodle 5.2.1+.  
-4. **Sprint B** (student submission) only after explicit go-ahead — official `mod_assign_*` only.  
+1. **Commit 1** — Sprint B docs only (`HANDOFF_ASSIGNMENT_SPRINT_B.md`, WS checklist).  
+2. **Mobile WS audit** (§7 in Sprint B handoff) before B1 backend.  
+3. **Commits 2–5** — B1 FastAPI → B1 Flutter → B2 FastAPI → B2 Flutter (stop after each for approval).  
 
 ### Do not start without explicit approval
 
-- Student submission sprint (B)  
-- Grading / rubrics / workflow (C–E)  
+- Skipping commit-by-commit deploy/test gates  
+- Grading / rubrics / workflow (Tier C)  
 - Other activity upserts (Quiz, etc.) beyond picker stubs  
 - Section redesign  
 - AI  
@@ -542,4 +543,4 @@ ESPACE must never create a parallel academic model when Moodle already provides 
 
 ---
 
-*End of handoff. Assignment Sprint A is implemented. Deploy/verify, then proceed to Sprint B only with explicit approval.*
+*End of handoff. Assignment Sprint A is implemented. Deploy/verify, then proceed to Phase 1 (student submission) only with explicit approval — `docs/ASSIGNMENT_ROADMAP.md`.*
