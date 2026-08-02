@@ -138,6 +138,18 @@ $functions = [
             MOODLE_OFFICIAL_MOBILE_SERVICE,
         ],
     ],
+
+    'local_espace_publish_quiz' => [
+        'classname'   => 'local_espace\external\quiz',
+        'methodname'  => 'publish',
+        'description' => 'Publish an ESPACE quiz payload (mod_quiz + questions). Quiz Studio Phase 0.',
+        'type'        => 'write',
+        'capabilities'=> 'local/espace:managemodules,moodle/course:manageactivities',
+        'ajax'        => false,
+        'services'    => [
+            MOODLE_OFFICIAL_MOBILE_SERVICE,
+        ],
+    ],
 ];
 
 $services = [
@@ -160,6 +172,7 @@ $services = [
             'local_espace_list_sections',
             'core_courseformat_update_course',
             'local_espace_upsert_module',
+            'local_espace_publish_quiz',
             'mod_assign_get_assignments',
             'core_files_get_unused_draft_itemid',
             'core_files_upload',

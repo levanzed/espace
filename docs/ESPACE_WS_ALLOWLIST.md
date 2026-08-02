@@ -11,7 +11,7 @@ Grow Mobile / ESPACE memberships when new FastAPI `call()` targets are required.
 
 Via official Mobile membership + `local_espace` `services` declarations:
 
-- `local_espace_*` section + `local_espace_upsert_module`
+- `local_espace_*` section + `local_espace_upsert_module` + `local_espace_publish_quiz`
 - Core/mod functions already on Mobile (courses, contents, assign reads, draft itemid, courseformat where enabled, etc.)
 - Draft files: **`/webservice/upload.php`** (not a WS function; requires service `uploadfiles=1`)
 

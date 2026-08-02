@@ -5,6 +5,7 @@ from app.routers.academic import router as academic_router
 from app.routers.activity import router as activity_router
 from app.routers.auth import router as auth_router
 from app.routers.courses import router as courses_router
+from app.routers.studio import router as studio_router
 from app.routers.users import router as users_router
 
 app = FastAPI(title="ESPACE API")
@@ -30,5 +31,6 @@ def root():
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(courses_router)
+app.include_router(studio_router)
 app.include_router(activity_router)
 app.include_router(academic_router)

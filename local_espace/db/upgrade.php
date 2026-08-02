@@ -99,5 +99,17 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080108, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080109) {
+        // Quiz Studio Phase 0: local_espace_publish_quiz.
+        external_update_descriptions('local_espace');
+        upgrade_plugin_savepoint(true, 2026080109, 'local', 'espace');
+    }
+
+    if ($oldversion < 2026080110) {
+        // Phase 0 polish: quiz sumgrades + Mobile-aligned WS capabilities on publish_quiz.
+        external_update_descriptions('local_espace');
+        upgrade_plugin_savepoint(true, 2026080110, 'local', 'espace');
+    }
+
     return true;
 }
