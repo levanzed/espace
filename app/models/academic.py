@@ -122,6 +122,42 @@ class AssignFinalSubmitRequest(BaseModel):
     accept_submission_statement: bool = False
 
 
+class AssignParticipantSummary(BaseModel):
+    """One row in the teacher grading inbox (mod_assign_list_participants + enrichments)."""
+
+    model_config = {"extra": "allow"}
+
+    id: int
+    fullname: str | None = None
+    submitted: bool | None = None
+    requiregrading: bool | None = None
+    submissionstatus: str | None = None
+    timemodified: int | None = None
+    gradetimemodified: int | None = None
+    gradingstatus: str | None = None
+    grade: float | None = None
+
+
+class AssignParticipantsResponse(BaseModel):
+    participants: list[AssignParticipantSummary] = Field(default_factory=list)
+    warnings: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class AssignSaveGradeRequest(BaseModel):
+    """Save grade and feedback (mod_assign_save_grade)."""
+
+    userid: int
+    grade: float
+    attemptnumber: int = -1
+    feedback_text: str = ""
+    feedback_draftitemid: int | None = None
+
+
+class AssignSaveGradeResponse(BaseModel):
+    success: bool = True
+    userid: int
+
+
 class ForumDiscussionRequest(BaseModel):
     subject: str
     message: str

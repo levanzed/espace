@@ -181,3 +181,44 @@ def submission_status_for_student(
         raise HTTPException(status_code=400, detail="userid is required for teacher view")
     assignment = assignment_for_cmid(cmid, token)
     return fetch_submission_status(int(assignment["id"]), token, userid=userid)
+
+
+def save_grade_for_student(
+    cmid: int,
+    token: str,
+    *,
+    userid: int,
+    grade: float,
+    attemptnumber: int = -1,
+    feedback_text: str = "",
+    feedback_draftitemid: int | None = None,
+) -> dict[str, Any]:
+    assignment = assignment_for_cmid(cmid, token)
+    assign_id = int(assignment["id"])
+
+    plugindata: dict[str, Any] = {}
+    if feedback_text.strip():
+        plugindata["assignfeedbackcomments_editor"] = {
+            "text": feedback_text,
+            "format": 1,
+        }
+    if feedback_draftitemid is not None:
+        plugindata["files_filemanager"] = feedback_draftitemid
+
+    try:
+        call(
+            "mod_assign_save_grade",
+            token=token,
+            assignmentid=assign_id,
+            userid=userid,
+            grade=grade,
+            attemptnumber=attemptnumber,
+            addattempt=0,
+            workflowstate="",
+            applytoall=0,
+            plugindata=plugindata,
+        )
+    except MoodleError as exc:
+        raise_http(exc)
+
+    return {"success": True, "userid": userid}

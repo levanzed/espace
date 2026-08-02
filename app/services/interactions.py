@@ -6,6 +6,7 @@ from typing import Any
 
 from fastapi import HTTPException
 
+from app.services import assign_grading
 from app.services import assign_workflow
 from app.services.activity import get_activity
 from app.services.moodle import MoodleError, call, raise_http
@@ -59,34 +60,18 @@ def assign_save_grade(
     grade: float,
     attemptnumber: int = -1,
     feedback_text: str = "",
+    feedback_draftitemid: int | None = None,
     token: str,
 ) -> Any:
-    activity = get_activity(cmid, token)
-    assignment = _require_detail(activity, "assignment")
-    assign_id = assignment.get("id")
-    if not assign_id:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-
-    try:
-        return call(
-            "mod_assign_save_grade",
-            token=token,
-            assignmentid=assign_id,
-            userid=userid,
-            grade=grade,
-            attemptnumber=attemptnumber,
-            addattempt=0,
-            workflowstate="",
-            applytoall=0,
-            plugindata={
-                "assignfeedbackcomments_editor": {
-                    "text": feedback_text,
-                    "format": 1,
-                }
-            },
-        )
-    except MoodleError as exc:
-        raise_http(exc)
+    return assign_grading.save_grade_for_student(
+        cmid,
+        token,
+        userid=userid,
+        grade=grade,
+        attemptnumber=attemptnumber,
+        feedback_text=feedback_text,
+        feedback_draftitemid=feedback_draftitemid,
+    )
 
 
 # ---------------------------------------------------------------------------

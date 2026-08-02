@@ -5,6 +5,9 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from app.deps import get_token_payload, moodle_token
 from app.models.academic import (
     AssignFinalSubmitRequest,
+    AssignParticipantsResponse,
+    AssignSaveGradeRequest,
+    AssignSaveGradeResponse,
     AssignSubmitRequest,
     ChoiceSubmitRequest,
     ForumDiscussionRequest,
@@ -139,7 +142,7 @@ def assign_status(
         raise_http(exc)
 
 
-@router.get("/activity/{cmid}/assign/participants")
+@router.get("/activity/{cmid}/assign/participants", response_model=AssignParticipantsResponse)
 def assign_participants(
     cmid: int,
     groupid: int = 0,
@@ -156,6 +159,28 @@ def assign_participants(
             filter_text=filter,
             skip=skip,
             limit=limit,
+        )
+    except HTTPException:
+        raise
+    except MoodleError as exc:
+        raise_http(exc    )
+
+
+@router.post("/activity/{cmid}/assign/grades", response_model=AssignSaveGradeResponse)
+def save_assign_grade(
+    cmid: int,
+    body: AssignSaveGradeRequest,
+    token: str = Depends(moodle_token),
+):
+    try:
+        return assign_grading.save_grade_for_student(
+            cmid,
+            token,
+            userid=body.userid,
+            grade=body.grade,
+            attemptnumber=body.attemptnumber,
+            feedback_text=body.feedback_text,
+            feedback_draftitemid=body.feedback_draftitemid,
         )
     except HTTPException:
         raise
