@@ -158,6 +158,16 @@ def submit_for_grading(
         raise_http(exc)
 
 
-def get_submission_status_for_cmid(cmid: int, token: str) -> dict[str, Any]:
+def get_submission_status_for_cmid(
+    cmid: int,
+    token: str,
+    *,
+    userid: int = 0,
+) -> dict[str, Any]:
     assignment = _assignment_from_cmid(cmid, token)
-    return fetch_submission_status(int(assignment["id"]), token)
+    return fetch_submission_status(int(assignment["id"]), token, userid=userid)
+
+
+def assignment_for_cmid(cmid: int, token: str) -> dict[str, Any]:
+    """Assignment config record from mod_assign_get_assignments (via activity payload)."""
+    return _assignment_from_cmid(cmid, token)

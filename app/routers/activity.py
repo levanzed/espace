@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from app.deps import get_token_payload, moodle_token
 from app.models.academic import (
@@ -12,6 +12,7 @@ from app.models.academic import (
     ForumUpdatePostRequest,
     QuizProcessRequest,
 )
+from app.services import assign_grading
 from app.services import assign_workflow
 from app.services import interactions
 from app.services.activity import get_activity
@@ -125,10 +126,37 @@ def delete_forum_post(
 @router.get("/activity/{cmid}/assign/status")
 def assign_status(
     cmid: int,
+    userid: int = 0,
     token: str = Depends(moodle_token),
 ):
     try:
+        if userid > 0:
+            return assign_grading.submission_status_for_student(cmid, token, userid)
         return assign_workflow.get_submission_status_for_cmid(cmid, token)
+    except HTTPException:
+        raise
+    except MoodleError as exc:
+        raise_http(exc)
+
+
+@router.get("/activity/{cmid}/assign/participants")
+def assign_participants(
+    cmid: int,
+    groupid: int = 0,
+    filter: str = Query("", alias="filter"),
+    skip: int = 0,
+    limit: int = 0,
+    token: str = Depends(moodle_token),
+):
+    try:
+        return assign_grading.list_participants_for_cmid(
+            cmid,
+            token,
+            groupid=groupid,
+            filter_text=filter,
+            skip=skip,
+            limit=limit,
+        )
     except HTTPException:
         raise
     except MoodleError as exc:
