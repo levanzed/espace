@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 
 from app.deps import get_token_payload, moodle_token
 from app.models.academic import (
+    AssignFinalSubmitRequest,
     AssignSubmitRequest,
     ChoiceSubmitRequest,
     ForumDiscussionRequest,
@@ -11,6 +12,7 @@ from app.models.academic import (
     ForumUpdatePostRequest,
     QuizProcessRequest,
 )
+from app.services import assign_workflow
 from app.services import interactions
 from app.services.activity import get_activity
 from app.services.moodle import MoodleError, call, raise_http
@@ -125,17 +127,10 @@ def assign_status(
     cmid: int,
     token: str = Depends(moodle_token),
 ):
-    activity_data = get_activity(cmid, token)
-    assignment = activity_data.get("details", {}).get("assignment", {})
-    assign_id = assignment.get("id")
-    if not assign_id:
-        raise HTTPException(status_code=404, detail="Assignment not found")
     try:
-        return call(
-            "mod_assign_get_submission_status",
-            assignid=assign_id,
-            token=token,
-        )
+        return assign_workflow.get_submission_status_for_cmid(cmid, token)
+    except HTTPException:
+        raise
     except MoodleError as exc:
         raise_http(exc)
 
@@ -157,9 +152,15 @@ def save_assign_submission(
 @router.post("/activity/{cmid}/assign/submit")
 def submit_assign(
     cmid: int,
+    body: AssignFinalSubmitRequest | None = Body(None),
     token: str = Depends(moodle_token),
 ):
-    return interactions.assign_submit_for_grading(cmid, token)
+    accept = False if body is None else body.accept_submission_statement
+    return interactions.assign_submit_for_grading(
+        cmid,
+        accept_submission_statement=accept,
+        token=token,
+    )
 
 
 @router.get("/activity/{cmid}/quiz/attempts")

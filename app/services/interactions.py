@@ -6,6 +6,7 @@ from typing import Any
 
 from fastapi import HTTPException
 
+from app.services import assign_workflow
 from app.services.activity import get_activity
 from app.services.moodle import MoodleError, call, raise_http
 
@@ -30,55 +31,25 @@ def assign_save_submission(
     draftitemid: int | None,
     token: str,
 ) -> Any:
-    activity = get_activity(cmid, token)
-    assignment = _require_detail(activity, "assignment")
-    assign_id = assignment.get("id")
-    if not assign_id:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-
-    plugindata: dict[str, Any] = {}
-    if onlinetext is not None:
-        plugindata["onlinetext_editor"] = {
-            "text": onlinetext,
-            "format": 1,
-            "itemid": 0,
-        }
-    if draftitemid is not None:
-        plugindata["files_filemanager"] = draftitemid
-
-    if not plugindata:
-        raise HTTPException(
-            status_code=400,
-            detail="Provide onlinetext and/or draftitemid for the submission",
-        )
-
-    try:
-        return call(
-            "mod_assign_save_submission",
-            token=token,
-            assignmentid=assign_id,
-            plugindata=plugindata,
-        )
-    except MoodleError as exc:
-        raise_http(exc)
+    return assign_workflow.save_submission(
+        cmid,
+        onlinetext=onlinetext,
+        draftitemid=draftitemid,
+        token=token,
+    )
 
 
-def assign_submit_for_grading(cmid: int, token: str) -> Any:
-    activity = get_activity(cmid, token)
-    assignment = _require_detail(activity, "assignment")
-    assign_id = assignment.get("id")
-    if not assign_id:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-
-    try:
-        return call(
-            "mod_assign_submit_for_grading",
-            token=token,
-            assignmentid=assign_id,
-            acceptsubmissionstatement=1,
-        )
-    except MoodleError as exc:
-        raise_http(exc)
+def assign_submit_for_grading(
+    cmid: int,
+    *,
+    accept_submission_statement: bool,
+    token: str,
+) -> Any:
+    return assign_workflow.submit_for_grading(
+        cmid,
+        accept_submission_statement=accept_submission_statement,
+        token=token,
+    )
 
 
 def assign_save_grade(

@@ -1,3 +1,4 @@
+from app.services import assign_workflow
 from app.services.moodle import MoodleError, call
 
 
@@ -73,24 +74,15 @@ def _fetch_assign_details(instance: int, course_id: int, cmid: int, token: str) 
         if assignment:
             break
 
-    status = {}
+    status: dict = {}
     if assignment:
-        status = _safe_call(
-            "mod_assign_get_submission_status",
+        assign_id = assignment.get("id", instance)
+        status = assign_workflow.fetch_submission_status(
+            int(assign_id),
             token,
-            assignid=assignment.get("id", instance),
+            raise_on_error=False,
         )
-        # Same tokenisation as course-module contents so pluginfile URLs open in the app.
-        if isinstance(assignment.get("introattachments"), list):
-            assignment["introattachments"] = _normalize_contents(
-                assignment["introattachments"],
-                token,
-            )
-        if isinstance(assignment.get("introfiles"), list):
-            assignment["introfiles"] = _normalize_contents(
-                assignment["introfiles"],
-                token,
-            )
+        assignment = assign_workflow.tokenize_assignment_intro_files(assignment, token)
 
     return {
         "assignment": assignment,

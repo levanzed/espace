@@ -116,6 +116,12 @@ class AssignSubmitRequest(BaseModel):
     draftitemid: int | None = None
 
 
+class AssignFinalSubmitRequest(BaseModel):
+    """Final submit for grading (mod_assign_submit_for_grading)."""
+
+    accept_submission_statement: bool = False
+
+
 class ForumDiscussionRequest(BaseModel):
     subject: str
     message: str
