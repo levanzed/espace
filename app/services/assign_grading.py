@@ -13,6 +13,11 @@ from app.services.assign_workflow import (
 from app.services.moodle import MoodleError, call, raise_http
 
 
+def _moodle_bool(value: bool) -> int:
+    """Moodle REST expects 0/1 for PARAM_BOOL, not Python True/False strings."""
+    return 1 if value else 0
+
+
 def _normalize_participants(raw: Any) -> list[dict[str, Any]]:
     if isinstance(raw, list):
         return [dict(item) for item in raw if isinstance(item, dict)]
@@ -130,9 +135,11 @@ def list_participants_for_cmid(
             filter=filter_text,
             skip=skip,
             limit=limit,
-            onlyids=False,
-            includeenrolments=False,
-            tablesort=False,
+            onlyids=_moodle_bool(False),
+            # Moodle 5.x throws invaliduserfield if false when enrolledcourses
+            # is not in user_get_default_fields(); official default is true.
+            includeenrolments=_moodle_bool(True),
+            tablesort=_moodle_bool(False),
         )
     except MoodleError as exc:
         raise_http(exc)
