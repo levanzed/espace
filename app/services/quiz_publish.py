@@ -32,15 +32,6 @@ def publish_quiz(
     if not payload.title.strip():
         raise HTTPException(status_code=400, detail="payload.title is required")
 
-    types = {q.type.strip().lower() for q in payload.questions}
-    allowed = {"multiple_choice", "short_answer"}
-    unknown = types - allowed
-    if unknown:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported question types: {sorted(unknown)}",
-        )
-
     try:
         return call(
             "local_espace_publish_quiz",
