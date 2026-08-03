@@ -89,6 +89,7 @@ final class QuizService extends BaseService {
     global $CFG, $DB, $PAGE;
 
     require_once($CFG->dirroot . '/course/modlib.php');
+    require_once($CFG->dirroot . '/mod/quiz/lib.php');
     require_once($CFG->dirroot . '/mod/quiz/locallib.php');
     require_once($CFG->libdir . '/questionlib.php');
 
@@ -119,9 +120,15 @@ final class QuizService extends BaseService {
       $moduleinfo->modulename = 'quiz';
       $moduleinfo->add = 'quiz';
       $moduleinfo->section = (int) $section->section;
+      $this->apply_quiz_create_defaults($moduleinfo);
       $moduleinfo->name = $title;
-      $moduleinfo->intro = $intro['text'];
-      $moduleinfo->introformat = $intro['format'];
+      if (isset($moduleinfo->introeditor)) {
+        $moduleinfo->introeditor['text'] = $intro['text'];
+        $moduleinfo->introeditor['format'] = $intro['format'];
+      } else {
+        $moduleinfo->intro = $intro['text'];
+        $moduleinfo->introformat = $intro['format'];
+      }
 
       $moduleinfo = add_moduleinfo($moduleinfo, $course, null);
       $cmid = (int) $moduleinfo->coursemodule;
@@ -171,6 +178,84 @@ final class QuizService extends BaseService {
       'quizid' => (int) $quiz->id,
       'questions' => $saved,
     ]);
+  }
+
+  /**
+   * Apply mod_quiz form-equivalent defaults before add_moduleinfo().
+   *
+   * Mirrors mod/quiz/tests/generator/lib.php create_instance() so quiz_process_options()
+   * receives quizpassword and other NOT NULL columns (password, subnet, preferredbehaviour, …).
+   *
+   * @param stdClass $moduleinfo Moduleinfo from prepare_new_moduleinfo_data().
+   * @return void
+   */
+  private function apply_quiz_create_defaults(stdClass $moduleinfo): void {
+    $quizconfig = get_config('quiz');
+
+    $defaults = [
+      'timeopen' => 0,
+      'timeclose' => 0,
+      'timelimit' => 0,
+      'overduehandling' => 'autosubmit',
+      'graceperiod' => isset($quizconfig->graceperiod) ? (int) $quizconfig->graceperiod : 86400,
+      'preferredbehaviour' => 'deferredfeedback',
+      'attempts' => 0,
+      'attemptonlast' => 0,
+      'grademethod' => QUIZ_GRADEHIGHEST,
+      'decimalpoints' => 2,
+      'questiondecimalpoints' => -1,
+      'attemptduring' => 1,
+      'correctnessduring' => 1,
+      'maxmarksduring' => 1,
+      'marksduring' => 1,
+      'specificfeedbackduring' => 1,
+      'generalfeedbackduring' => 1,
+      'rightanswerduring' => 1,
+      'overallfeedbackduring' => 0,
+      'attemptimmediately' => 1,
+      'correctnessimmediately' => 1,
+      'maxmarksimmediately' => 1,
+      'marksimmediately' => 1,
+      'specificfeedbackimmediately' => 1,
+      'generalfeedbackimmediately' => 1,
+      'rightanswerimmediately' => 1,
+      'overallfeedbackimmediately' => 1,
+      'attemptopen' => 1,
+      'correctnessopen' => 1,
+      'maxmarksopen' => 1,
+      'marksopen' => 1,
+      'specificfeedbackopen' => 1,
+      'generalfeedbackopen' => 1,
+      'rightansweropen' => 1,
+      'overallfeedbackopen' => 1,
+      'attemptclosed' => 1,
+      'correctnessclosed' => 1,
+      'maxmarksclosed' => 1,
+      'marksclosed' => 1,
+      'specificfeedbackclosed' => 1,
+      'generalfeedbackclosed' => 1,
+      'rightanswerclosed' => 1,
+      'overallfeedbackclosed' => 1,
+      'questionsperpage' => isset($quizconfig->questionsperpage) ? (int) $quizconfig->questionsperpage : 1,
+      'shuffleanswers' => 1,
+      'sumgrades' => 0,
+      'grade' => isset($quizconfig->maximumgrade) ? (float) $quizconfig->maximumgrade : 100,
+      'quizpassword' => '',
+      'subnet' => '',
+      'browsersecurity' => '',
+      'delay1' => 0,
+      'delay2' => 0,
+      'showuserpicture' => 0,
+      'showblocks' => 0,
+      'navmethod' => QUIZ_NAVMETHOD_FREE,
+      'canredoquestions' => 0,
+    ];
+
+    foreach ($defaults as $name => $value) {
+      if (!property_exists($moduleinfo, $name) || $moduleinfo->$name === null) {
+        $moduleinfo->$name = $value;
+      }
+    }
   }
 
   /**

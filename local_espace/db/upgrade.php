@@ -111,5 +111,10 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080110, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080111) {
+        // Quiz publish: mod_quiz create defaults (quizpassword etc.) for add_moduleinfo on 5.2.
+        upgrade_plugin_savepoint(true, 2026080111, 'local', 'espace');
+    }
+
     return true;
 }
