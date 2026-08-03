@@ -116,5 +116,10 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080111, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080112) {
+        // Fix swapped args to question_require_capability_on in quiz publish.
+        upgrade_plugin_savepoint(true, 2026080112, 'local', 'espace');
+    }
+
     return true;
 }

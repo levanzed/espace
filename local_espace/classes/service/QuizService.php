@@ -287,8 +287,6 @@ final class QuizService extends BaseService {
       $category = $DB->get_record('question_categories', ['id' => $categoryid], '*', MUST_EXIST);
     }
 
-    question_require_capability_on('moodle/question:add', $category);
-
     return [$category, $bankcontext];
   }
 
