@@ -121,5 +121,29 @@ function xmldb_local_espace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080112, 'local', 'espace');
     }
 
+    if ($oldversion < 2026080114) {
+        // App auth uses moodle_mobile_app tokens. CM structural actions
+        // (cm_hide/show/delete/duplicate/move) call core_courseformat_update_course,
+        // which was only on the optional ESPACE service — causing
+        // webservice_access_exception for Mobile tokens. Register it on Mobile.
+        global $DB;
+        $mobileservice = $DB->get_record('external_services', [
+            'shortname' => MOODLE_OFFICIAL_MOBILE_SERVICE,
+        ]);
+        if ($mobileservice) {
+            $exists = $DB->record_exists('external_services_functions', [
+                'externalserviceid' => $mobileservice->id,
+                'functionname' => 'core_courseformat_update_course',
+            ]);
+            if (!$exists) {
+                $DB->insert_record('external_services_functions', (object) [
+                    'externalserviceid' => $mobileservice->id,
+                    'functionname' => 'core_courseformat_update_course',
+                ]);
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026080114, 'local', 'espace');
+    }
+
     return true;
 }

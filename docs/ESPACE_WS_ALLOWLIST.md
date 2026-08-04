@@ -12,7 +12,8 @@ Grow Mobile / ESPACE memberships when new FastAPI `call()` targets are required.
 Via official Mobile membership + `local_espace` `services` declarations:
 
 - `local_espace_*` section + `local_espace_upsert_module` + `local_espace_publish_quiz`
-- Core/mod functions already on Mobile (courses, contents, assign reads, draft itemid, courseformat where enabled, etc.)
+- Core/mod functions already on Mobile (courses, contents, assign reads, draft itemid, etc.)
+- **`core_courseformat_update_course`** — required for CM hide/show/delete/duplicate/move (`POST /courses/{id}/modules/actions`). Added to Mobile by `local_espace` 1.1.14 upgrade (not in stock Mobile allowlist).
 - Draft files: **`/webservice/upload.php`** (not a WS function; requires service `uploadfiles=1`)
 
 ## Sprint B — assign WS (verify on Mobile before each phase)
