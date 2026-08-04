@@ -121,6 +121,9 @@ final class QuizService extends BaseService {
       $moduleinfo->add = 'quiz';
       $moduleinfo->section = (int) $section->section;
       $this->apply_quiz_create_defaults($moduleinfo);
+      // Force all published questions onto one page (see apply_quiz_create_defaults).
+      // prepare_new_moduleinfo_data may already populate questionsperpage from site config.
+      $moduleinfo->questionsperpage = 0;
       $moduleinfo->name = $title;
       if (isset($moduleinfo->introeditor)) {
         $moduleinfo->introeditor['text'] = $intro['text'];
@@ -147,7 +150,8 @@ final class QuizService extends BaseService {
         }
         $questionid = $this->create_question($questionpayload, (int) $category->id, $bankcontext);
         quiz_require_question_use($questionid);
-        quiz_add_quiz_question($questionid, $quiz);
+        // page=0 lets quiz_add_quiz_question honour questionsperpage (0 = all on one page).
+        quiz_add_quiz_question($questionid, $quiz, 0);
         $saved[] = [
           'index' => $index,
           'type' => (string) ($questionpayload['type'] ?? ''),
@@ -236,7 +240,11 @@ final class QuizService extends BaseService {
       'generalfeedbackclosed' => 1,
       'rightanswerclosed' => 1,
       'overallfeedbackclosed' => 1,
-      'questionsperpage' => isset($quizconfig->questionsperpage) ? (int) $quizconfig->questionsperpage : 1,
+      // ESPACE Studio publishes a complete quiz intended to be taken as one unit.
+      // Moodle site default is often 1 (one question per page), which hides later
+      // questions from clients that only load attempt page 0. Match Moodle UI when
+      // teachers set "Every question on its own page" off / all on one page.
+      'questionsperpage' => 0,
       'shuffleanswers' => 1,
       'sumgrades' => 0,
       'grade' => isset($quizconfig->maximumgrade) ? (float) $quizconfig->maximumgrade : 100,
@@ -299,30 +307,42 @@ final class QuizService extends BaseService {
   private function create_question(array $payload, int $categoryid, \context $bankcontext): int {
     $type = strtolower(trim((string) ($payload['type'] ?? '')));
     if ($type === 'multiple_choice') {
-      $fromform = $this->multichoice_fromform($payload, $categoryid);
+      $fromform = $this->multichoice_fromform($payload, $categoryid, $bankcontext);
       $qtype = 'multichoice';
     } else if ($type === 'short_answer') {
-      $fromform = $this->shortanswer_fromform($payload, $categoryid);
+      $fromform = $this->shortanswer_fromform($payload, $categoryid, $bankcontext);
       $qtype = 'shortanswer';
     } else {
       throw new moodle_exception('errorquizpublishunsupportedqtype', 'local_espace', '', $type);
     }
 
     $question = new stdClass();
-    $question->category = $categoryid;
     $question->qtype = $qtype;
-    $question->contextid = $bankcontext->id;
+    $question->parent = 0;
+    $question->length = 1;
 
     $saved = question_bank::get_qtype($qtype)->save_question($question, $fromform);
     return (int) $saved->id;
   }
 
   /**
+   * Moodle question forms store category as "categoryid,contextid".
+   *
+   * @param int $categoryid
+   * @param \context $bankcontext
+   * @return string
+   */
+  private function category_form_value(int $categoryid, \context $bankcontext): string {
+    return $categoryid . ',' . $bankcontext->id;
+  }
+
+  /**
    * @param array $payload
    * @param int $categoryid
+   * @param \context $bankcontext
    * @return stdClass
    */
-  private function multichoice_fromform(array $payload, int $categoryid): stdClass {
+  private function multichoice_fromform(array $payload, int $categoryid, \context $bankcontext): stdClass {
     $stem = $this->rich_text_field($payload['stem'] ?? []);
     $choices = $payload['choices'] ?? [];
     if (!is_array($choices) || count($choices) < 2) {
@@ -330,7 +350,8 @@ final class QuizService extends BaseService {
     }
 
     $form = new stdClass();
-    $form->category = $categoryid;
+    // Match Moodle UI / question editing form category encoding.
+    $form->category = $this->category_form_value($categoryid, $bankcontext);
     $form->name = shorten_text(strip_tags($stem['text']), 80);
     if ($form->name === '') {
       $form->name = get_string('question');
@@ -340,13 +361,25 @@ final class QuizService extends BaseService {
     $form->defaultmark = isset($payload['mark']) ? (float) $payload['mark'] : 1.0;
     $form->penalty = 0.3333333;
     $form->status = question_version_status::QUESTION_STATUS_READY;
+    // Single-answer MCQ → radio buttons (qtype_multichoice_options.single = 1).
     $form->single = '1';
+    $form->layout = '0';
     $form->shuffleanswers = 1;
     $form->answernumbering = 'abc';
     $form->showstandardinstruction = 0;
-    $form->correctfeedback = ['text' => '', 'format' => FORMAT_HTML];
-    $form->partiallycorrectfeedback = ['text' => '', 'format' => FORMAT_HTML];
-    $form->incorrectfeedback = ['text' => '', 'format' => FORMAT_HTML];
+    // Moodle UI defaults from question/lang (correctfeedbackdefault, …).
+    $form->correctfeedback = [
+      'text' => get_string('correctfeedbackdefault', 'question'),
+      'format' => FORMAT_HTML,
+    ];
+    $form->partiallycorrectfeedback = [
+      'text' => get_string('partiallycorrectfeedbackdefault', 'question'),
+      'format' => FORMAT_HTML,
+    ];
+    $form->incorrectfeedback = [
+      'text' => get_string('incorrectfeedbackdefault', 'question'),
+      'format' => FORMAT_HTML,
+    ];
     $form->shownumcorrect = 0;
     $form->numhints = 0;
     $form->hint = [];
@@ -370,7 +403,11 @@ final class QuizService extends BaseService {
         $correctcount++;
       }
       $idx = count($form->answer);
-      $form->answer[$idx] = $textfield;
+      // Moodle UI stores choice text via the HTML editor (FORMAT_HTML).
+      $form->answer[$idx] = [
+        'text' => $textfield['text'],
+        'format' => FORMAT_HTML,
+      ];
       $form->fraction[$idx] = $iscorrect ? '1.0' : '0.0';
       $form->feedback[$idx] = ['text' => '', 'format' => FORMAT_HTML];
     }
@@ -379,6 +416,7 @@ final class QuizService extends BaseService {
       throw new moodle_exception('errorquizpublishmcqchoices', 'local_espace');
     }
 
+    // Moodle form includes one empty trailing answer slot.
     $form->noanswers = count($form->answer) + 1;
 
     return $form;
@@ -387,9 +425,10 @@ final class QuizService extends BaseService {
   /**
    * @param array $payload
    * @param int $categoryid
+   * @param \context $bankcontext
    * @return stdClass
    */
-  private function shortanswer_fromform(array $payload, int $categoryid): stdClass {
+  private function shortanswer_fromform(array $payload, int $categoryid, \context $bankcontext): stdClass {
     $stem = $this->rich_text_field($payload['stem'] ?? []);
     $answers = $payload['answers'] ?? [];
     if (!is_array($answers) || count($answers) < 1) {
@@ -397,7 +436,7 @@ final class QuizService extends BaseService {
     }
 
     $form = new stdClass();
-    $form->category = $categoryid;
+    $form->category = $this->category_form_value($categoryid, $bankcontext);
     $form->name = shorten_text(strip_tags($stem['text']), 80);
     if ($form->name === '') {
       $form->name = get_string('question');
@@ -407,11 +446,13 @@ final class QuizService extends BaseService {
     $form->defaultmark = isset($payload['mark']) ? (float) $payload['mark'] : 1.0;
     $form->penalty = 0.3333333;
     $form->status = question_version_status::QUESTION_STATUS_READY;
-    $form->usecase = !empty($payload['case_sensitive']);
+    // Match Moodle UI: usecase is 0/1, not boolean.
+    $form->usecase = !empty($payload['case_sensitive']) ? 1 : 0;
     $form->answer = [];
     $form->fraction = [];
     $form->feedback = [];
 
+    $maxfraction = -1.0;
     foreach ($answers as $answer) {
       if (!is_array($answer)) {
         continue;
@@ -421,14 +462,41 @@ final class QuizService extends BaseService {
         continue;
       }
       $idx = count($form->answer);
+      // Short-answer answers are plain strings (see qtype_shortanswer test helpers).
       $form->answer[$idx] = $text;
       $fraction = isset($answer['fraction']) ? (float) $answer['fraction'] : 1.0;
-      $form->fraction[$idx] = (string) $fraction;
+      // Moodle shortanswer requires max fraction == 1.0 (fractionsnomax).
+      if ($fraction < 0.0) {
+        $fraction = 0.0;
+      }
+      if ($fraction > 1.0) {
+        // Accept 100-style percentages from drafts.
+        if ($fraction <= 100.0) {
+          $fraction = $fraction / 100.0;
+        } else {
+          $fraction = 1.0;
+        }
+      }
+      $form->fraction[$idx] = number_format($fraction, 7, '.', '');
       $form->feedback[$idx] = ['text' => '', 'format' => FORMAT_HTML];
+      if ($fraction > $maxfraction) {
+        $maxfraction = $fraction;
+      }
     }
 
     if (count($form->answer) < 1) {
       throw new moodle_exception('errorquizpublishshortanswers', 'local_espace');
+    }
+
+    // Guarantee at least one fully-correct answer (Moodle UI always has fraction 1.0).
+    if (abs($maxfraction - 1.0) > 0.0000001) {
+      $bestidx = 0;
+      foreach ($form->fraction as $idx => $frac) {
+        if ((float) $frac >= (float) $form->fraction[$bestidx]) {
+          $bestidx = $idx;
+        }
+      }
+      $form->fraction[$bestidx] = '1.0000000';
     }
 
     return $form;
